@@ -1,7 +1,4 @@
-# FatStd
-A batteries included shard library for C (static link friendly).
-
-This project is intended to provide middleware needed for creating Lua interpreter (FatLua) with a batteries included standard library - one executable, deploy anywhere, no shared library pain.
+# FatStd — Design Document
 
 ## 1. Vision & Scope
 
@@ -13,13 +10,14 @@ The core problem FatStd addresses is that, while many high-quality C libraries e
 * Bare-bones by design, providing low-level primitives instead of productivity-oriented APIs
 * Fragmented across ecosystems, forcing developers to assemble a “pseudo-stdlib” themselves
 
-Static linking is a first-class goal because it enables **single-binary deployment**, which is particularly useful for:
+Static linking is a first-class goal because it enables **single-binary deployment**, which is helpful for:
 
 * Endpoint / client tooling
 * Security engineering
 * Game development
 * Rapid application development
 * Systems utilities
+
 
 FatStd provides a **productivity layer above libc and POSIX**, offering functionality expected of modern environments—without complicated build systems or dependency hell.
 
@@ -37,30 +35,27 @@ The design philosophy is **pragmatic and opinionated**:
 * Strong input validation and defensive programming
 * Readability and maintainability take precedence over cleverness
 
-The project is considered **experimental until v1.0.0**. API and ABI stability are not guaranteed prior to that milestone. Semantic versioning applies post–1.0.0.
-Current version: **0.1.0**
+The project is considered **experimental until v1.0.0**. API and ABI stability are not guaranteed prior to that milestone. Semantic versioning applies post–1.0.0. For now the version is "0.1.0".
 
 ---
 
 ## 2. Target Platforms & Toolchains
 
-FatStd targets **modern desktop and server platforms only**.
+FatStd targets **modern desktop and server platforms only**:
 
-### Supported Platforms
-
-* **Operating Systems**
+* Operating Systems:
 
   * Windows
   * macOS
   * Linux
-* **Architectures**
+* Architectures:
 
   * amd64
   * arm64
 
-Embedded and freestanding environments are explicitly out of scope.
+FatStd explicitly does **not** target embedded or freestanding environments.
 
-### Toolchain Requirements
+Toolchain requirements:
 
 * C standard: **C17**
 * Must compile cleanly as both **C and C++**
@@ -73,34 +68,39 @@ Embedded and freestanding environments are explicitly out of scope.
 
 Static builds are a **key design goal**, especially to support single-binary deployment.
 
-Platform-specific APIs should be avoided unless strictly necessary. Platform differences should be abstracted in a manner similar to the Go standard library, with clear separation and minimal leakage.
+Platform-specific APIs should be avoided unless strictly necessary. Platform differences should be abstracted in a way similar to the Go standard library (clear separation without leaking implementation details).
 
-**musl support:**
-musl is not supported or prioritized. If FatStd happens to work with musl, that is acceptable, but no development effort will be invested in ensuring compatibility.
+**Open question:**
+Should musl be *unsupported* outright, or merely not prioritized? If unsupported, should this be enforced or just documented?
+
+unsupported - if it works, great, but I'm not investing in musl support.
 
 ---
 
 ## 3. Library Structure & Module Organization
 
-FatStd follows a **Go- and Python-inspired module structure**, prioritizing clarity and discoverability.
+FatStd follows a **Go- and Python-inspired module structure**, favoring clarity and discoverability over minimalism.
 
-### Principles
+Key principles:
 
-* Modules are **largely independent**
+* Modules should be **largely independent**
 * Shared utilities and policies may exist for cross-cutting concerns
-* Cyclic dependencies are **not permitted**
+* Cyclic dependencies are not permitted
 * There is **no umbrella header** (e.g., no `fatstd.h`)
-* Partial builds are **not supported**; FatStd is all-or-nothing
+* Partial builds are not supported; FatStd is **all-or-nothing**
 
-### Directory Layout
+Directory layout:
 
 * `include/` — public headers
 * `src/` — implementation and private headers (co-located with `.c` files)
-* `pkg/` — Go-based implementation code
+* `pkg/` - for Go-based code
 
-Module boundaries are **purely organizational** and are not enforced at the build-system level.
+Experimental labeling is unnecessary; the entire project is experimental pre–1.0.0.
 
-The entire project is experimental prior to v1.0.0; no additional experimental labeling is used.
+**Open question:**
+Should module boundaries be enforced at the build-system level (e.g., per-module static libs), or purely organizational?
+
+Purely organizational
 
 ---
 
@@ -108,26 +108,26 @@ The entire project is experimental prior to v1.0.0; no additional experimental l
 
 FatStd adopts **Go-inspired naming conventions adapted to C**.
 
-### Public Symbols
+Public symbols:
 
 * Prefixed by module name
 * PascalCase for exported functions and types
   Example: `fmt_Println(...)`
 
-### General Rules
+General rules:
 
-* Favor adjective–noun naming
+* Favor adjective–noun patterns
 * Avoid macros unless strongly justified
 * Opaque types are represented as opaque pointers
-* Private/internal symbols follow Go-style “package-private” conventions
+* Private/internal symbols follow Go-style conventions (package-private by naming)
 
-### Formatting & Style
+Formatting and style:
 
-* `clang-format` using **Microsoft C/C++ style**
+* `clang-format` with **Microsoft C/C++ style**
 * Headers must be strictly C-compliant
-* Compiler extensions are avoided
+* Avoid compiler extensions
 
-Inline functions are permitted where performance-critical and well-justified.
+Inline functions are allowed where performance-critical and well-justified.
 
 ---
 
@@ -135,36 +135,32 @@ Inline functions are permitted where performance-critical and well-justified.
 
 Memory ownership rules are **explicit and conservative**.
 
-### General Rules
-
 * By default, **the caller owns all dynamically allocated memory**
-* Every allocation has a corresponding free function
-* Allocated memory is **zero-initialized by default** to reduce undefined behavior
-
-### Allocators
+* Every allocation must have a corresponding free function
+* Memory is **zero-initialized by default** to reduce undefined behavior
 
 FatStd supports **custom allocators**, following SDL’s approach:
 
-* FatStd does not provide allocator implementations
-* The library accepts user-provided allocation hooks
-
-### Out-of-Memory Behavior
+* The library does not provide allocator implementations
+* The library must accept user-provided allocation hooks
 
 Out-of-memory conditions are **fatal by default**:
 
 * No attempt is made to recover
-* The program terminates with a helpful error message
+* Return a helpful error message
 
-### Specific Decisions
+**Unresolved questions (must be answered):**
 
-* `realloc` semantics follow **SDL3’s behavior**
-* Stack-based allocation helpers are **disallowed**
-* Go ↔ C memory crossing rules:
+1. What exact `realloc` semantics should FatStd follow?
+Follow SDL3's approach
 
-  * By default, Go-backed APIs **copy data into C-managed memory**
-  * APIs that return Go-owned memory are **explicitly documented**
-  * Such APIs provide a matching free function
-  * Misuse (e.g., failure to free Go-owned memory) is **fatal**
+2. Are stack-based helpers allowed, and if so, under what constraints?
+Disallowed
+
+3. How are allocations crossing the Go ↔ C boundary tracked and freed?
+By default, all data returned from Go-backed APIs is copied into C-managed memory.
+Functions that return Go-owned memory are explicitly documented and provide a corresponding free function. Failure to release such memory results in a leak.
+Misuse of Go-owned memory should be fatal
 
 ---
 
@@ -172,7 +168,7 @@ Out-of-memory conditions are **fatal by default**:
 
 FatStd’s error handling model is **explicitly inspired by SDL**.
 
-### Properties
+Key properties:
 
 * Avoid `errno`
 * Prefer error codes over success-return values
@@ -180,12 +176,14 @@ FatStd’s error handling model is **explicitly inspired by SDL**.
 * Errors are allocation-free
 * Helper functions exist for retrieving and propagating error state
 
-### Fatal Errors
+Fatal errors:
 
-* By default, fatal errors terminate the program with a clear message
+* By default, terminate the program with a clear message
 * Callers may install fatal-error callbacks to override default behavior
 
-Error state is **thread-local**, following SDL’s model.
+**Open question:**
+Will error state be thread-local (as in SDL), or global but synchronized?
+Thread local should be fine
 
 ---
 
@@ -193,14 +191,14 @@ Error state is **thread-local**, following SDL’s model.
 
 API design mirrors the **Go standard library philosophy** wherever applicable.
 
-### Defaults
+Defaults:
 
 * Majority of APIs are synchronous
-* Most APIs are thread-safe
-* Blocking vs non-blocking behavior is explicit
-* Ownership transfer is unambiguous
+* Most APIs should be thread-safe
+* Blocking vs non-blocking behavior should be explicit
+* Ownership transfer should be unambiguous
 
-### Additional Rules
+Additional rules:
 
 * Prefer explicit sizes over null-terminated strings
 * Prefer managed abstractions over raw OS handles
@@ -213,13 +211,13 @@ Breaking changes are defined as violations of documented API contracts.
 
 ## 8. Strings, Buffers, and Data Structures
 
-Design of strings, buffers, and container data structures is **intentionally deferred** and will be addressed when concrete needs arise.
+No plans on this for now, delay until we need to decide
 
 ---
 
 ## 9. Concurrency & Threading
 
-Concurrency support is provided **via SDL3**, which is a **hard dependency for all builds**.
+Concurrency support is provided **via SDL3**.
 
 FatStd relies on SDL3 for:
 
@@ -231,9 +229,13 @@ FatStd relies on SDL3 for:
 
 Global state should be avoided.
 
-FatStd generally does **not** integrate with OS event loops, except where required by SDL3.
+FatStd generally does **not** integrate with OS event loops, except where SDL3 requires it.
 
-SDL3 APIs may also be used for memory allocation and libc replacement where appropriate.
+**Open question:**
+Is SDL3 a hard dependency for *all* builds, or only for modules requiring concurrency?
+
+Hard dependency for all builds.
+I welcome using SDL functions for memory allocation as well as its libc replacement.
 
 ---
 
@@ -244,7 +246,9 @@ FatStd favors:
 * SDL3 APIs
 * Go standard library–backed implementations exposed via C bindings
 
-OS-specific behavior should be abstracted wherever possible.
+OS-specific behavior should be abstracted where possible.
+
+(No further requirements specified.)
 
 ---
 
@@ -252,7 +256,7 @@ OS-specific behavior should be abstracted wherever possible.
 
 FatStd includes a logging subsystem inspired by **Go’s `log/slog`**.
 
-### Logging Properties
+Logging properties:
 
 * Structured logging
 * Always enabled (not compile-time optional)
@@ -264,7 +268,7 @@ FatStd includes a logging subsystem inspired by **Go’s `log/slog`**.
   * Error
   * Fatal
 
-### Assertions
+Assertions:
 
 * Enabled in debug builds
 * Removed in release builds
@@ -272,17 +276,18 @@ FatStd includes a logging subsystem inspired by **Go’s `log/slog`**.
 
 Tracing is explicitly out of scope.
 
-*(Log emission mechanism—stdout/stderr/file/handler—remains to be finalized.)*
+**Open question:**
+How are logs emitted (stdout, stderr, file, callback, handler interface)?
 
 ---
 
 ## 12. Build System & Distribution
 
-### Build System
+Build system:
 
 * **CMake** is canonical
 
-### Distribution Characteristics
+Distribution properties:
 
 * Usable as a subproject
 * Installs headers system-wide
@@ -290,12 +295,13 @@ Tracing is explicitly out of scope.
 * Builds static and dynamic libraries
 * Targets Windows, macOS, Linux (amd64 + arm64)
 
-Additional constraints:
+There are:
 
 * No optional dependencies
-* No examples (unit tests serve as examples)
-* No packaging concerns at this stage
-* Library version is defined in **exactly one place**
+* No examples (unit tests act as examples)
+* No packaging concerns yet
+
+Library version is defined in **exactly one place**.
 
 ---
 
@@ -303,10 +309,10 @@ Additional constraints:
 
 FatStd follows **test-driven development**.
 
-### Testing Strategy
+Testing strategy:
 
 * Primarily unit tests early
-* Integration tests may be added later
+* Integration tests may come later
 * Tests should avoid filesystem/network dependencies unless justified
 * Cross-platform tests must pass everywhere
 * Platform-specific tests are allowed
@@ -325,7 +331,7 @@ Performance regressions are not explicitly tested, but mechanisms for measuring 
 
 Documentation is generated using **Doxygen**.
 
-### Documentation Rules
+Rules:
 
 * Not every API requires examples
 * Unit tests serve as implicit examples
@@ -340,7 +346,7 @@ Primary audience: **developers**
 
 ## 16. Security & Hardening
 
-### Security Posture
+Security posture:
 
 * Favor safety and correctness
 * Bounds checking enabled by default
@@ -350,9 +356,9 @@ FatStd:
 
 * Does not target hardened builds
 * Does not integrate with sanitizers
-* Practices defensive programming without aiming for absolute zero-UB guarantees
+* Practices defensive programming but does not aim for zero-UB absolutism
 
-The threat model is intentionally minimal.
+Threat model is intentionally minimal.
 
 ---
 
@@ -363,10 +369,7 @@ FatStd is a **single-author project**.
 * API decisions are owned by the author
 * Breaking changes require author approval
 * No RFC process
-
-### Deprecation Policy
-
-* Deprecated APIs are:
+* Deprecations are:
 
   * Commented
   * Warned
@@ -385,7 +388,7 @@ A feature is considered complete when:
 
 A significant portion of FatStd is powered by the **Go standard library**, compiled into C-compatible shared libraries (static and dynamic).
 
-### Rationale
+Rationale:
 
 * Go provides a batteries-included standard library
 * Cross-platform by default
@@ -394,31 +397,31 @@ A significant portion of FatStd is powered by the **Go standard library**, compi
 
 Some subsystems (e.g., SDL-related functionality) remain purely C-based.
 
-### Go ↔ C Integration Rules
+**Critical open questions (must be resolved):**
 
-* **FFI model:** C-first API with Go as an internal backend
-* **Memory ownership:**
+1. What is the FFI boundary model between Go and C?
+C-first API, Go backend
+Public API is C
+Go is an internal engine
+Strict boundary
 
-  * Copy-by-default
-  * Explicit ownership APIs where necessary, with paired free functions
-* **Panic handling:**
+2. How is memory ownership tracked across the boundary?
+A. Copy-by-default
+Go → C always copies
+Go frees internally
+B. Explicit ownership APIs
+Documented ownership transfer
+Paired free functions
 
-  * Configurable
-  * Default behavior is fatal
-  * Optional callback override
-* **Go runtime initialization:**
+3. How are Go panics handled when called from C?
+Configurable
+Default fatal
+Optional callback override
 
-  * No explicit init API
-  * Runtime initializes implicitly as needed
-* **ABI hygiene:**
+4. Is Go runtime initialization centralized or per-module?
+No explicit init API; I think the Go runtime initializes itself somehow.
 
-  * Go symbols are hidden
-  * Only the C API is exported
-
----
-
-If you want next steps, good candidates would be:
-
-* Locking the logging emission model
-* Defining the first concrete module set (v0.1 scope)
-* Writing a machine-readable spec for AI-driven implementation
+5. Are Go symbols hidden to avoid ABI pollution?
+Hide everything
+Only C API exported
+Go symbols hidden

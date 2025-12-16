@@ -1,7 +1,4 @@
-# FatStd
-A batteries included shard library for C (static link friendly).
-
-This project is intended to provide middleware needed for creating Lua interpreter (FatLua) with a batteries included standard library - one executable, deploy anywhere, no shared library pain.
+# FatStd — Design Document
 
 ## 1. Vision & Scope
 
