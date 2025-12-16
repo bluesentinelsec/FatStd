@@ -219,3 +219,48 @@ If it:
 → Can wait.
 
 ---
+
+To lay the strongest foundation for FatStd's **Go runtime + C wrappers**, prioritize Go standard library packages that are:
+
+- Fundamental to your handle-based, opaque-object model.
+- Heavily used across nearly all other modules.
+- Relatively straightforward to bind without deep platform-specific quirks.
+- Critical for enabling your end-goal of Fat Lua quickly.
+
+These early bindings will stress-test your centralized handle registry, memory rules (no Go memory escaping, explicit copies), error/panic handling, and cross-module sharing the most. Getting them right first locks in your core integration patterns.
+
+### Recommended Priority Order
+
+1. **strings + bytes + strconv** (Start here — absolute foundation)
+   - Why first: Almost every other package deals with text or binary data. You'll need robust string/buffer handling for APIs like `fat_StringCopyUTF8`, lengths, conversions, building, trimming, etc.
+   - Influences: Sets the pattern for your core opaque `fat_String` and `fat_Buffer` types. Every copy-out API will rely on this.
+   - Low-risk: Pure Go, no OS/syscall issues, easy to bind safely with copies.
+   - Bonus: Immediately useful for logging, diagnostics, and internal utilities.
+
+2. **io + io/fs + os + path/filepath** (Next — filesystem is a core productivity win)
+   - Why: Go's fs/io/os stack is excellent and cross-platform. Bindings here give you high-level file read/write/stat/mkdir/walk without reinventing wheels or depending on fragile POSIX.
+   - Influences: Many modules (http, crypto, encoding) need file I/O. Your design favors Go-backed implementations for OS interaction.
+   - Pair with bufio if needed for readers/writers.
+   - Note: Use pure-Go paths where possible; avoid deep syscall if it complicates static builds.
+
+3. **net/http** (including http.Client, Response, etc.)
+   - Why: One of the biggest "batteries" in Go's stdlib. A solid HTTP client (GET/POST/TLS/JSON handling) will feel magically productive to C users.
+   - Influences: Touches strings, io, crypto/tls, time. Great for testing handle lifetime across requests.
+   - TLS comes "for free" via crypto/tls — huge win over linking OpenSSL manually.
+
+4. **crypto/** subtree (crypto/sha256, crypto/hmac, crypto/rand, crypto/aes, etc.; plus encoding/base64, hex)
+   - Why: Modern tooling needs hashing, signing, encryption, random bytes. Go's crypto is pure-Go and best-in-class.
+   - Influences: Used by http (TLS), potential future auth, and security-focused users.
+   - Start with the basics (sha256, hmac, rand) — they're self-contained.
+
+After these four, your foundation will be rock-solid, and you'll have covered ~80% of the "that's cool" use cases (HTTP fetches, JSON via strings+bytes, file manipulation, crypto primitives). This directly enables the minimal Fat Lua prototype you sketched: fat_String/Buffer, fat_Http, fat_Fs, fat_Crypto.
+
+### Why This Order (and Not Others Yet)
+- Avoid concurrency/time/sync early → Your design delegates threading to SDL3 (hard dependency), so no need to expose sync/mutex yet. time can wait until http or logging needs timeouts.
+- encoding/json, compress/*, archive/* → Great candidates, but they heavily depend on strings/bytes/io first.
+- context → Useful for cancellation in http/fs, but add after http.
+- Pitfalls to watch: net/http and os may touch platform-specific bits, but Go's implementations are mostly pure-Go and work fine in c-archive/static builds. Your handle registry will shield most issues.
+
+Start with strings/bytes — implement a few ops (New, Len, CopyUTF8, Free, Append, etc.), get the registry humming, and you'll gain massive momentum. Once these four are bound and tested, FatStd will already feel substantially more "batteries-included" than raw C.
+
+You've got the architecture nailed. This sequence will make the early wins addictive and set up everything else cleanly. Excited to see the first bindings land!
