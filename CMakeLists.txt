@@ -36,6 +36,9 @@ add_custom_command(
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
   DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/fatstd_go.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/handles.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/string_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstrings/fatstrings.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.mod"
   VERBATIM
 )
@@ -59,7 +62,7 @@ endif()
 
 add_library(fatstd::fatstd ALIAS fatstd)
 
-target_sources(fatstd PRIVATE src/fat_version.c src/fat_go.c)
+target_sources(fatstd PRIVATE src/fat_version.c src/fat_go.c src/fat_string.c)
 
 target_include_directories(
   fatstd

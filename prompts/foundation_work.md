@@ -1,8 +1,5 @@
-Refer to docs/design.md to understand my project.
+We have codified the design and have added a process for onboarding new functions to libfatstd. Refer to these documents for needed context, and alert me if these documents significantly drift from reality:
 
-Currently we have a trivial C function, and also a Python script to test the shared library via ctypes.
+1. docs/design.md
+2. docs/onboarding_and_testing_functions.md
 
-The next thing I want to do is add a trivial Go function to fatstd.
-The specific function does not matter, what matters is proving that code in C can invoke a function written in Go.
-
-Confirm understanding and propose a solution.

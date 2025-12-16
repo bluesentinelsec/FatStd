@@ -111,6 +111,38 @@ def test_fat_go_add(lib: ctypes.CDLL) -> None:
     assert got == 5, f"expected 5, got {got}"
 
 
+def test_fat_string_create_free(lib: ctypes.CDLL) -> None:
+    fat_string = ctypes.c_size_t
+
+    lib.fat_StringNewUTF8.argtypes = [ctypes.c_char_p]
+    lib.fat_StringNewUTF8.restype = fat_string
+
+    lib.fat_StringNewUTF8N.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    lib.fat_StringNewUTF8N.restype = fat_string
+
+    lib.fat_StringFree.argtypes = [fat_string]
+    lib.fat_StringFree.restype = None
+
+    s1 = lib.fat_StringNewUTF8(b"lorem ipsum")
+    assert s1 != 0, "fat_StringNewUTF8 returned 0 handle"
+    lib.fat_StringFree(s1)
+
+    raw = ctypes.create_string_buffer(b"abc\x00def")
+    s2 = lib.fat_StringNewUTF8N(ctypes.addressof(raw), len(raw.raw))
+    assert s2 != 0, "fat_StringNewUTF8N returned 0 handle"
+    lib.fat_StringFree(s2)
+
+
+def _run_test(name: str, fn) -> None:
+    print(f"test: {name} ... ", end="", flush=True)
+    try:
+        fn()
+    except Exception:
+        print("FAIL", flush=True)
+        raise
+    print("ok", flush=True)
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         description="ctypes-based smoke tests for the FatStd shared library"
@@ -142,8 +174,12 @@ def main(argv: list[str]) -> int:
 
     lib = _load_library(lib_path)
 
-    test_fat_version_string(lib, expected_version)
-    test_fat_go_add(lib)
+    _run_test("fat_VersionString", lambda: test_fat_version_string(lib, expected_version))
+    _run_test("fat_GoAdd", lambda: test_fat_go_add(lib))
+    _run_test(
+        "fat_StringNewUTF8 / fat_StringNewUTF8N / fat_StringFree",
+        lambda: test_fat_string_create_free(lib),
+    )
     print("ok")
     return 0
 
