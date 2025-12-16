@@ -103,6 +103,14 @@ def test_fat_version_string(lib: ctypes.CDLL, expected_version: str) -> None:
     assert version == expected_version, f"expected {expected_version!r}, got {version!r}"
 
 
+def test_fat_go_add(lib: ctypes.CDLL) -> None:
+    lib.fat_GoAdd.argtypes = [ctypes.c_int, ctypes.c_int]
+    lib.fat_GoAdd.restype = ctypes.c_int
+
+    got = lib.fat_GoAdd(2, 3)
+    assert got == 5, f"expected 5, got {got}"
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         description="ctypes-based smoke tests for the FatStd shared library"
@@ -135,6 +143,7 @@ def main(argv: list[str]) -> int:
     lib = _load_library(lib_path)
 
     test_fat_version_string(lib, expected_version)
+    test_fat_go_add(lib)
     print("ok")
     return 0
 

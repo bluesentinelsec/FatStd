@@ -1,8 +1,9 @@
-.PHONY: all help configure build clean distclean shared static reconfigure
+.PHONY: all help configure build clean distclean shared static reconfigure test
 
 BUILD_DIR ?= build
 BUILD_TYPE ?= Release
 SHARED ?= 0
+PYTHON ?= python3
 
 # Normalize (strip trailing slash) so comparisons work consistently.
 BUILD_DIR_NORM := $(patsubst %/,%,$(BUILD_DIR))
@@ -35,11 +36,13 @@ help:
 	  "  make reconfigure        Re-run configure (clears CMake cache)" \
 	  "  make clean              Remove all build directories" \
 	  "  make distclean          Alias for \`make clean\`" \
+	  "  make test               Build shared library and run Python tests" \
 	  "" \
 	  "Options:" \
 	  "  BUILD_DIR=<dir>         Build directory (default: build)" \
 	  "  BUILD_TYPE=<type>       CMake build type (default: Release)" \
 	  "  SHARED=0|1              Build shared library (default: 0)" \
+	  "  PYTHON=python3          Python interpreter for tests" \
 	  "  CMAKE_FLAGS='...'       Extra CMake configure flags"
 
 configure:
@@ -64,3 +67,6 @@ shared:
 
 static:
 	@$(MAKE) build SHARED=0
+
+test: shared
+	$(PYTHON) scripts/python_tests/test_fatstd_shared.py
