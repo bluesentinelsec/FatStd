@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-f45172d1f35edfa0ff4cd31ed58e28cf CMakeFiles/fatstd_go_build
-50488fc28f07d3b8aea600735f70c29e generated/go/fatstd_go.a
