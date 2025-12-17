@@ -17,6 +17,21 @@ func fatstdStringNewFromGoString(value string) uintptr {
 	return fatstdHandles.register(fatstrings.NewUTF8(value))
 }
 
+func fatstdStringFromHandle(handle uintptr) *fatstrings.String {
+	if handle == 0 {
+		panic("fatstdStringFromHandle: handle is 0")
+	}
+	value, ok := fatstdHandles.get(handle)
+	if !ok {
+		panic("fatstdStringFromHandle: invalid handle")
+	}
+	s, ok := value.(*fatstrings.String)
+	if !ok {
+		panic("fatstdStringFromHandle: handle is not a fat string")
+	}
+	return s
+}
+
 //export fatstd_go_string_new_utf8_cstr
 func fatstd_go_string_new_utf8_cstr(cstr *C.char) C.uintptr_t {
 	if cstr == nil {
@@ -41,6 +56,13 @@ func fatstd_go_string_new_utf8_n(bytes *C.char, len C.size_t) C.uintptr_t {
 	buf := C.GoBytes(unsafe.Pointer(bytes), C.int(len))
 	handle := fatstdStringNewFromGoString(string(buf))
 	return C.uintptr_t(handle)
+}
+
+//export fatstd_go_string_clone
+func fatstd_go_string_clone(handle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(handle))
+	cloned := fatstrings.Clone(s.Value())
+	return C.uintptr_t(fatstdStringNewFromGoString(cloned))
 }
 
 //export fatstd_go_string_free

@@ -8,7 +8,10 @@ import os
 import platform
 import re
 import sys
+import unittest
 from pathlib import Path
+
+from fatstd_test_support import FatStdTestContext, set_context
 
 
 def _fatal(message: str, *, exit_code: int = 2) -> "None":
@@ -92,61 +95,8 @@ def _load_library(lib_path: Path) -> ctypes.CDLL:
         _fatal(f"failed to load shared library {lib_path}: {exc}")
 
 
-def test_fat_version_string(lib: ctypes.CDLL, expected_version: str) -> None:
-    lib.fat_VersionString.argtypes = []
-    lib.fat_VersionString.restype = ctypes.c_char_p
-
-    raw = lib.fat_VersionString()
-    assert raw is not None, "fat_VersionString returned NULL"
-    version = raw.decode("utf-8", errors="strict")
-
-    assert version == expected_version, f"expected {expected_version!r}, got {version!r}"
-
-
-def test_fat_go_add(lib: ctypes.CDLL) -> None:
-    lib.fat_GoAdd.argtypes = [ctypes.c_int, ctypes.c_int]
-    lib.fat_GoAdd.restype = ctypes.c_int
-
-    got = lib.fat_GoAdd(2, 3)
-    assert got == 5, f"expected 5, got {got}"
-
-
-def test_fat_string_create_free(lib: ctypes.CDLL) -> None:
-    fat_string = ctypes.c_size_t
-
-    lib.fat_StringNewUTF8.argtypes = [ctypes.c_char_p]
-    lib.fat_StringNewUTF8.restype = fat_string
-
-    lib.fat_StringNewUTF8N.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
-    lib.fat_StringNewUTF8N.restype = fat_string
-
-    lib.fat_StringFree.argtypes = [fat_string]
-    lib.fat_StringFree.restype = None
-
-    s1 = lib.fat_StringNewUTF8(b"lorem ipsum")
-    assert s1 != 0, "fat_StringNewUTF8 returned 0 handle"
-    lib.fat_StringFree(s1)
-
-    raw = ctypes.create_string_buffer(b"abc\x00def")
-    s2 = lib.fat_StringNewUTF8N(ctypes.addressof(raw), len(raw.raw))
-    assert s2 != 0, "fat_StringNewUTF8N returned 0 handle"
-    lib.fat_StringFree(s2)
-
-
-def _run_test(name: str, fn) -> None:
-    print(f"test: {name} ... ", end="", flush=True)
-    try:
-        fn()
-    except Exception:
-        print("FAIL", flush=True)
-        raise
-    print("ok", flush=True)
-
-
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(
-        description="ctypes-based smoke tests for the FatStd shared library"
-    )
+    parser = argparse.ArgumentParser(description="unittest smoke tests for FatStd shared lib")
     parser.add_argument(
         "--lib",
         type=Path,
@@ -159,7 +109,8 @@ def main(argv: list[str]) -> int:
         default=None,
         help="Build directory to search (default: <repo>/build)",
     )
-    args = parser.parse_args(argv)
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose test output")
+    args, unittest_args = parser.parse_known_args(argv)
 
     repo_root = _find_repo_root(Path(__file__).resolve())
     expected_version = _project_version_from_cmakelists(repo_root / "CMakeLists.txt")
@@ -174,14 +125,18 @@ def main(argv: list[str]) -> int:
 
     lib = _load_library(lib_path)
 
-    _run_test("fat_VersionString", lambda: test_fat_version_string(lib, expected_version))
-    _run_test("fat_GoAdd", lambda: test_fat_go_add(lib))
-    _run_test(
-        "fat_StringNewUTF8 / fat_StringNewUTF8N / fat_StringFree",
-        lambda: test_fat_string_create_free(lib),
+    set_context(FatStdTestContext(lib=lib, expected_version=expected_version))
+
+    python_tests_dir = Path(__file__).resolve().parent
+    start_dir = python_tests_dir / "fatstd_tests"
+    suite = unittest.defaultTestLoader.discover(
+        start_dir=str(start_dir),
+        pattern="test_*.py",
+        top_level_dir=str(python_tests_dir),
     )
-    print("ok")
-    return 0
+    runner = unittest.TextTestRunner(verbosity=2 if args.verbose else 1)
+    result = runner.run(suite)
+    return 0 if result.wasSuccessful() else 1
 
 
 if __name__ == "__main__":
