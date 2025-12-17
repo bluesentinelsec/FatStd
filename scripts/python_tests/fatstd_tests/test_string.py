@@ -74,6 +74,45 @@ class TestString(unittest.TestCase):
         cls.fat_StringEqualFold = bind(
             "fat_StringEqualFold", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
         )
+        cls.fat_StringTrimPrefix = bind(
+            "fat_StringTrimPrefix", argtypes=[fat_string, fat_string], restype=fat_string
+        )
+        cls.fat_StringTrimSuffix = bind(
+            "fat_StringTrimSuffix", argtypes=[fat_string, fat_string], restype=fat_string
+        )
+        cls.fat_StringCut = bind(
+            "fat_StringCut",
+            argtypes=[
+                fat_string,
+                fat_string,
+                ctypes.POINTER(fat_string),
+                ctypes.POINTER(fat_string),
+            ],
+            restype=ctypes.c_bool,
+        )
+        cls.fat_StringCutPrefix = bind(
+            "fat_StringCutPrefix",
+            argtypes=[fat_string, fat_string, ctypes.POINTER(fat_string)],
+            restype=ctypes.c_bool,
+        )
+        cls.fat_StringCutSuffix = bind(
+            "fat_StringCutSuffix",
+            argtypes=[fat_string, fat_string, ctypes.POINTER(fat_string)],
+            restype=ctypes.c_bool,
+        )
+        cls.fat_StringFields = bind("fat_StringFields", argtypes=[fat_string], restype=fat_string_array)
+        cls.fat_StringRepeat = bind(
+            "fat_StringRepeat", argtypes=[fat_string, ctypes.c_int], restype=fat_string
+        )
+        cls.fat_StringContainsAny = bind(
+            "fat_StringContainsAny", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
+        )
+        cls.fat_StringIndexAny = bind(
+            "fat_StringIndexAny", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
+        )
+        cls.fat_StringToValidUTF8 = bind(
+            "fat_StringToValidUTF8", argtypes=[fat_string, fat_string], restype=fat_string
+        )
         cls.fat_StringFree = bind("fat_StringFree", argtypes=[fat_string], restype=None)
 
     def _assert_string_equal(self, a, b, *, message: str | None = None) -> None:
@@ -440,4 +479,196 @@ class TestString(unittest.TestCase):
         self.fat_StringFree(a)
         self.fat_StringFree(missing)
         self.fat_StringFree(sub)
+        self.fat_StringFree(s)
+
+    def test_trim_prefix_suffix(self) -> None:
+        s = self.fat_StringNewUTF8(b"foobar")
+        self.assertNotEqual(0, s)
+
+        prefix = self.fat_StringNewUTF8(b"foo")
+        suffix = self.fat_StringNewUTF8(b"bar")
+        self.assertNotEqual(0, prefix)
+        self.assertNotEqual(0, suffix)
+
+        trimmed_prefix = self.fat_StringTrimPrefix(s, prefix)
+        self.assertNotEqual(0, trimmed_prefix)
+        expected_after_prefix = self.fat_StringNewUTF8(b"bar")
+        self.assertNotEqual(0, expected_after_prefix)
+        self._assert_string_equal(trimmed_prefix, expected_after_prefix)
+
+        trimmed_suffix = self.fat_StringTrimSuffix(s, suffix)
+        self.assertNotEqual(0, trimmed_suffix)
+        expected_after_suffix = self.fat_StringNewUTF8(b"foo")
+        self.assertNotEqual(0, expected_after_suffix)
+        self._assert_string_equal(trimmed_suffix, expected_after_suffix)
+
+        self.fat_StringFree(expected_after_suffix)
+        self.fat_StringFree(trimmed_suffix)
+        self.fat_StringFree(expected_after_prefix)
+        self.fat_StringFree(trimmed_prefix)
+        self.fat_StringFree(suffix)
+        self.fat_StringFree(prefix)
+        self.fat_StringFree(s)
+
+    def test_cut_basic(self) -> None:
+        s = self.fat_StringNewUTF8(b"foo=bar")
+        self.assertNotEqual(0, s)
+
+        sep = self.fat_StringNewUTF8(b"=")
+        self.assertNotEqual(0, sep)
+
+        before_out = fat_string_handle_type()()
+        after_out = fat_string_handle_type()()
+        found = self.fat_StringCut(s, sep, ctypes.byref(before_out), ctypes.byref(after_out))
+        self.assertTrue(found)
+        self.assertNotEqual(0, before_out.value)
+        self.assertNotEqual(0, after_out.value)
+
+        expected_before = self.fat_StringNewUTF8(b"foo")
+        expected_after = self.fat_StringNewUTF8(b"bar")
+        self.assertNotEqual(0, expected_before)
+        self.assertNotEqual(0, expected_after)
+        self._assert_string_equal(before_out.value, expected_before)
+        self._assert_string_equal(after_out.value, expected_after)
+
+        self.fat_StringFree(expected_after)
+        self.fat_StringFree(expected_before)
+        self.fat_StringFree(after_out.value)
+        self.fat_StringFree(before_out.value)
+        self.fat_StringFree(sep)
+        self.fat_StringFree(s)
+
+    def test_cut_not_found(self) -> None:
+        s = self.fat_StringNewUTF8(b"foo")
+        self.assertNotEqual(0, s)
+
+        sep = self.fat_StringNewUTF8(b"=")
+        self.assertNotEqual(0, sep)
+
+        before_out = fat_string_handle_type()()
+        after_out = fat_string_handle_type()()
+        found = self.fat_StringCut(s, sep, ctypes.byref(before_out), ctypes.byref(after_out))
+        self.assertFalse(found)
+        self.assertNotEqual(0, before_out.value)
+        self.assertNotEqual(0, after_out.value)
+
+        expected_before = self.fat_StringNewUTF8(b"foo")
+        expected_after = self.fat_StringNewUTF8(b"")
+        self.assertNotEqual(0, expected_before)
+        self.assertNotEqual(0, expected_after)
+        self._assert_string_equal(before_out.value, expected_before)
+        self._assert_string_equal(after_out.value, expected_after)
+
+        self.fat_StringFree(expected_after)
+        self.fat_StringFree(expected_before)
+        self.fat_StringFree(after_out.value)
+        self.fat_StringFree(before_out.value)
+        self.fat_StringFree(sep)
+        self.fat_StringFree(s)
+
+    def test_cut_prefix_suffix(self) -> None:
+        s = self.fat_StringNewUTF8(b"foobar")
+        self.assertNotEqual(0, s)
+
+        prefix = self.fat_StringNewUTF8(b"foo")
+        suffix = self.fat_StringNewUTF8(b"bar")
+        self.assertNotEqual(0, prefix)
+        self.assertNotEqual(0, suffix)
+
+        after_prefix_out = fat_string_handle_type()()
+        found_prefix = self.fat_StringCutPrefix(s, prefix, ctypes.byref(after_prefix_out))
+        self.assertTrue(found_prefix)
+        self.assertNotEqual(0, after_prefix_out.value)
+        expected_after_prefix = self.fat_StringNewUTF8(b"bar")
+        self.assertNotEqual(0, expected_after_prefix)
+        self._assert_string_equal(after_prefix_out.value, expected_after_prefix)
+
+        after_suffix_out = fat_string_handle_type()()
+        found_suffix = self.fat_StringCutSuffix(s, suffix, ctypes.byref(after_suffix_out))
+        self.assertTrue(found_suffix)
+        self.assertNotEqual(0, after_suffix_out.value)
+        expected_after_suffix = self.fat_StringNewUTF8(b"foo")
+        self.assertNotEqual(0, expected_after_suffix)
+        self._assert_string_equal(after_suffix_out.value, expected_after_suffix)
+
+        self.fat_StringFree(expected_after_suffix)
+        self.fat_StringFree(after_suffix_out.value)
+        self.fat_StringFree(expected_after_prefix)
+        self.fat_StringFree(after_prefix_out.value)
+        self.fat_StringFree(suffix)
+        self.fat_StringFree(prefix)
+        self.fat_StringFree(s)
+
+    def test_fields(self) -> None:
+        s = self.fat_StringNewUTF8(b"  a\tb\nc  ")
+        self.assertNotEqual(0, s)
+        arr = self.fat_StringFields(s)
+        self.assertNotEqual(0, arr)
+        self.assertEqual(3, self.fat_StringArrayLen(arr))
+
+        expected0 = self.fat_StringNewUTF8(b"a")
+        expected1 = self.fat_StringNewUTF8(b"b")
+        expected2 = self.fat_StringNewUTF8(b"c")
+        self.assertNotEqual(0, expected0)
+        self.assertNotEqual(0, expected1)
+        self.assertNotEqual(0, expected2)
+
+        e0 = self.fat_StringArrayGet(arr, 0)
+        e1 = self.fat_StringArrayGet(arr, 1)
+        e2 = self.fat_StringArrayGet(arr, 2)
+        self.assertNotEqual(0, e0)
+        self.assertNotEqual(0, e1)
+        self.assertNotEqual(0, e2)
+
+        self._assert_string_equal(e0, expected0)
+        self._assert_string_equal(e1, expected1)
+        self._assert_string_equal(e2, expected2)
+
+        self.fat_StringFree(e2)
+        self.fat_StringFree(e1)
+        self.fat_StringFree(e0)
+        self.fat_StringFree(expected2)
+        self.fat_StringFree(expected1)
+        self.fat_StringFree(expected0)
+        self.fat_StringArrayFree(arr)
+        self.fat_StringFree(s)
+
+    def test_repeat_contains_any_index_any_to_valid_utf8(self) -> None:
+        s = self.fat_StringNewUTF8(b"ab")
+        self.assertNotEqual(0, s)
+        repeated = self.fat_StringRepeat(s, 3)
+        self.assertNotEqual(0, repeated)
+        expected = self.fat_StringNewUTF8(b"ababab")
+        self.assertNotEqual(0, expected)
+        self._assert_string_equal(repeated, expected)
+
+        chars_yes = self.fat_StringNewUTF8(b"zba")
+        chars_no = self.fat_StringNewUTF8(b"zZ")
+        self.assertNotEqual(0, chars_yes)
+        self.assertNotEqual(0, chars_no)
+        self.assertTrue(self.fat_StringContainsAny(repeated, chars_yes))
+        self.assertFalse(self.fat_StringContainsAny(repeated, chars_no))
+        self.assertTrue(self.fat_StringIndexAny(repeated, chars_yes))
+        self.assertFalse(self.fat_StringIndexAny(repeated, chars_no))
+
+        invalid_bytes = b"\xffa"
+        invalid_raw = ctypes.create_string_buffer(invalid_bytes, len(invalid_bytes))
+        invalid = self.fat_StringNewUTF8N(ctypes.addressof(invalid_raw), len(invalid_raw.raw))
+        self.assertNotEqual(0, invalid)
+        replacement = self.fat_StringNewUTF8(b"?")
+        self.assertNotEqual(0, replacement)
+        valid = self.fat_StringToValidUTF8(invalid, replacement)
+        self.assertNotEqual(0, valid)
+        expected_valid = self.fat_StringNewUTF8(b"?a")
+        self.assertNotEqual(0, expected_valid)
+        self._assert_string_equal(valid, expected_valid)
+
+        self.fat_StringFree(expected_valid)
+        self.fat_StringFree(valid)
+        self.fat_StringFree(replacement)
+        self.fat_StringFree(invalid)
+        self.fat_StringFree(chars_no)
+        self.fat_StringFree(chars_yes)
+        self.fat_StringFree(expected)
+        self.fat_StringFree(repeated)
         self.fat_StringFree(s)

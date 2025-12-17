@@ -227,6 +227,115 @@ func fatstd_go_string_equal_fold(sHandle C.uintptr_t, tHandle C.uintptr_t) C.int
 	return 0
 }
 
+//export fatstd_go_string_trim_prefix
+func fatstd_go_string_trim_prefix(sHandle C.uintptr_t, prefixHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	prefix := fatstdStringFromHandle(uintptr(prefixHandle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.TrimPrefix(s.Value(), prefix.Value())))
+}
+
+//export fatstd_go_string_trim_suffix
+func fatstd_go_string_trim_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	suffix := fatstdStringFromHandle(uintptr(suffixHandle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.TrimSuffix(s.Value(), suffix.Value())))
+}
+
+//export fatstd_go_string_cut
+func fatstd_go_string_cut(sHandle C.uintptr_t, sepHandle C.uintptr_t, beforeOut *C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if beforeOut == nil {
+		panic("fatstd_go_string_cut: beforeOut is NULL")
+	}
+	if afterOut == nil {
+		panic("fatstd_go_string_cut: afterOut is NULL")
+	}
+
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	sep := fatstdStringFromHandle(uintptr(sepHandle))
+	before, after, found := fatstrings.Cut(s.Value(), sep.Value())
+
+	*beforeOut = C.uintptr_t(fatstdStringNewFromGoString(before))
+	*afterOut = C.uintptr_t(fatstdStringNewFromGoString(after))
+
+	if found {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_cut_prefix
+func fatstd_go_string_cut_prefix(sHandle C.uintptr_t, prefixHandle C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if afterOut == nil {
+		panic("fatstd_go_string_cut_prefix: afterOut is NULL")
+	}
+
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	prefix := fatstdStringFromHandle(uintptr(prefixHandle))
+	after, found := fatstrings.CutPrefix(s.Value(), prefix.Value())
+
+	*afterOut = C.uintptr_t(fatstdStringNewFromGoString(after))
+	if found {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_cut_suffix
+func fatstd_go_string_cut_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if afterOut == nil {
+		panic("fatstd_go_string_cut_suffix: afterOut is NULL")
+	}
+
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	suffix := fatstdStringFromHandle(uintptr(suffixHandle))
+	after, found := fatstrings.CutSuffix(s.Value(), suffix.Value())
+
+	*afterOut = C.uintptr_t(fatstdStringNewFromGoString(after))
+	if found {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_fields
+func fatstd_go_string_fields(sHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	return C.uintptr_t(fatstdStringArrayNew(fatstrings.Fields(s.Value())))
+}
+
+//export fatstd_go_string_repeat
+func fatstd_go_string_repeat(sHandle C.uintptr_t, count C.int) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.Repeat(s.Value(), int(count))))
+}
+
+//export fatstd_go_string_contains_any
+func fatstd_go_string_contains_any(sHandle C.uintptr_t, charsHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	chars := fatstdStringFromHandle(uintptr(charsHandle))
+	if fatstrings.ContainsAny(s.Value(), chars.Value()) {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_index_any
+func fatstd_go_string_index_any(sHandle C.uintptr_t, charsHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	chars := fatstdStringFromHandle(uintptr(charsHandle))
+	if fatstrings.IndexAny(s.Value(), chars.Value()) {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_to_valid_utf8
+func fatstd_go_string_to_valid_utf8(sHandle C.uintptr_t, replacementHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	replacement := fatstdStringFromHandle(uintptr(replacementHandle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.ToValidUTF8(s.Value(), replacement.Value())))
+}
+
 //export fatstd_go_string_array_free
 func fatstd_go_string_array_free(handle C.uintptr_t) {
 	if handle == 0 {

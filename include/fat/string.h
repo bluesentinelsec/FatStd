@@ -62,6 +62,32 @@ FATSTD_API int fat_StringCompare(fat_String a, fat_String b);
 
 FATSTD_API bool fat_StringEqualFold(fat_String s, fat_String t);
 
+FATSTD_API fat_String fat_StringTrimPrefix(fat_String s, fat_String prefix);
+
+FATSTD_API fat_String fat_StringTrimSuffix(fat_String s, fat_String suffix);
+
+// Returns `true` if `sep` is found in `s`.
+// Outputs are newly allocated fat_String handles that must be freed with fat_StringFree.
+FATSTD_API bool fat_StringCut(fat_String s, fat_String sep, fat_String *before_out, fat_String *after_out);
+
+// Returns `true` if `prefix` is found at the start of `s`.
+// `after_out` is a newly allocated fat_String handle that must be freed with fat_StringFree.
+FATSTD_API bool fat_StringCutPrefix(fat_String s, fat_String prefix, fat_String *after_out);
+
+// Returns `true` if `suffix` is found at the end of `s`.
+// `after_out` is a newly allocated fat_String handle that must be freed with fat_StringFree.
+FATSTD_API bool fat_StringCutSuffix(fat_String s, fat_String suffix, fat_String *after_out);
+
+FATSTD_API fat_StringArray fat_StringFields(fat_String s);
+
+FATSTD_API fat_String fat_StringRepeat(fat_String s, int count);
+
+FATSTD_API bool fat_StringContainsAny(fat_String s, fat_String chars);
+
+FATSTD_API bool fat_StringIndexAny(fat_String s, fat_String chars);
+
+FATSTD_API fat_String fat_StringToValidUTF8(fat_String s, fat_String replacement);
+
 FATSTD_API void fat_StringFree(fat_String s);
 
 #ifdef __cplusplus

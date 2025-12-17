@@ -116,3 +116,43 @@ func Compare(a, b string) int {
 func EqualFold(s, t string) bool {
 	return strings.EqualFold(s, t)
 }
+
+func TrimPrefix(s, prefix string) string {
+	return strings.TrimPrefix(s, prefix)
+}
+
+func TrimSuffix(s, suffix string) string {
+	return strings.TrimSuffix(s, suffix)
+}
+
+func Cut(s, sep string) (before, after string, found bool) {
+	return strings.Cut(s, sep)
+}
+
+func CutPrefix(s, prefix string) (after string, found bool) {
+	return strings.CutPrefix(s, prefix)
+}
+
+func CutSuffix(s, suffix string) (after string, found bool) {
+	return strings.CutSuffix(s, suffix)
+}
+
+func Fields(s string) []string {
+	return strings.Fields(s)
+}
+
+func Repeat(s string, count int) string {
+	return strings.Repeat(s, count)
+}
+
+func ContainsAny(s, chars string) bool {
+	return strings.ContainsAny(s, chars)
+}
+
+func IndexAny(s, chars string) bool {
+	return strings.IndexAny(s, chars) >= 0
+}
+
+func ToValidUTF8(s, replacement string) string {
+	return strings.ToValidUTF8(s, replacement)
+}

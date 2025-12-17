@@ -90,6 +90,47 @@ bool fat_StringEqualFold(fat_String s, fat_String t) {
   return (bool)fatstd_go_string_equal_fold((uintptr_t)s, (uintptr_t)t);
 }
 
+fat_String fat_StringTrimPrefix(fat_String s, fat_String prefix) {
+  return (fat_String)fatstd_go_string_trim_prefix((uintptr_t)s, (uintptr_t)prefix);
+}
+
+fat_String fat_StringTrimSuffix(fat_String s, fat_String suffix) {
+  return (fat_String)fatstd_go_string_trim_suffix((uintptr_t)s, (uintptr_t)suffix);
+}
+
+bool fat_StringCut(fat_String s, fat_String sep, fat_String *before_out, fat_String *after_out) {
+  return (bool)fatstd_go_string_cut((uintptr_t)s, (uintptr_t)sep, (uintptr_t *)before_out,
+                                   (uintptr_t *)after_out);
+}
+
+bool fat_StringCutPrefix(fat_String s, fat_String prefix, fat_String *after_out) {
+  return (bool)fatstd_go_string_cut_prefix((uintptr_t)s, (uintptr_t)prefix, (uintptr_t *)after_out);
+}
+
+bool fat_StringCutSuffix(fat_String s, fat_String suffix, fat_String *after_out) {
+  return (bool)fatstd_go_string_cut_suffix((uintptr_t)s, (uintptr_t)suffix, (uintptr_t *)after_out);
+}
+
+fat_StringArray fat_StringFields(fat_String s) {
+  return (fat_StringArray)fatstd_go_string_fields((uintptr_t)s);
+}
+
+fat_String fat_StringRepeat(fat_String s, int count) {
+  return (fat_String)fatstd_go_string_repeat((uintptr_t)s, count);
+}
+
+bool fat_StringContainsAny(fat_String s, fat_String chars) {
+  return (bool)fatstd_go_string_contains_any((uintptr_t)s, (uintptr_t)chars);
+}
+
+bool fat_StringIndexAny(fat_String s, fat_String chars) {
+  return (bool)fatstd_go_string_index_any((uintptr_t)s, (uintptr_t)chars);
+}
+
+fat_String fat_StringToValidUTF8(fat_String s, fat_String replacement) {
+  return (fat_String)fatstd_go_string_to_valid_utf8((uintptr_t)s, (uintptr_t)replacement);
+}
+
 void fat_StringFree(fat_String s) {
   fatstd_go_string_free((uintptr_t)s);
 }
