@@ -14,6 +14,10 @@ fat_String fat_StringClone(fat_String s) {
   return (fat_String)fatstd_go_string_clone((uintptr_t)s);
 }
 
+bool fat_StringContains(fat_String s, fat_String substr) {
+  return (bool)fatstd_go_string_contains((uintptr_t)s, (uintptr_t)substr);
+}
+
 void fat_StringFree(fat_String s) {
   fatstd_go_string_free((uintptr_t)s);
 }

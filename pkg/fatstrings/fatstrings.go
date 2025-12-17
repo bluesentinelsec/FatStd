@@ -20,3 +20,7 @@ func (s *String) Value() string {
 func Clone(s string) string {
 	return strings.Clone(s)
 }
+
+func Contains(s, substr string) bool {
+	return strings.Contains(s, substr)
+}

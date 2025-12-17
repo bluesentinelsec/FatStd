@@ -1,0 +1,4 @@
+/Users/michaellong/projects/FatStd/build/CMakeFiles/fatstd_go_build.dir
+/Users/michaellong/projects/FatStd/build/CMakeFiles/fatstd.dir
+/Users/michaellong/projects/FatStd/build/CMakeFiles/edit_cache.dir
+/Users/michaellong/projects/FatStd/build/CMakeFiles/rebuild_cache.dir

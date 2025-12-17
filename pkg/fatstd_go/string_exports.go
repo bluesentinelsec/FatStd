@@ -65,6 +65,16 @@ func fatstd_go_string_clone(handle C.uintptr_t) C.uintptr_t {
 	return C.uintptr_t(fatstdStringNewFromGoString(cloned))
 }
 
+//export fatstd_go_string_contains
+func fatstd_go_string_contains(aHandle C.uintptr_t, bHandle C.uintptr_t) C.int {
+	a := fatstdStringFromHandle(uintptr(aHandle))
+	b := fatstdStringFromHandle(uintptr(bHandle))
+	if fatstrings.Contains(a.Value(), b.Value()) {
+		return 1
+	}
+	return 0
+}
+
 //export fatstd_go_string_free
 func fatstd_go_string_free(handle C.uintptr_t) {
 	if handle == 0 {

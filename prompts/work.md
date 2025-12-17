@@ -4,6 +4,7 @@ Refer to the following documents for context on the project:
 
 Let's continue working on the fat strings subsystem.
 I want to onboard this function:
-func Clone(s string) string
+
+Contains(s, substr string) bool
 
 I expect the Go bindings, C bindings, and a unit test in Python.

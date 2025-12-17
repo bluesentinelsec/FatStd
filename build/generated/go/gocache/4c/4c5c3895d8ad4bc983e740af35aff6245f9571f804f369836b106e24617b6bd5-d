@@ -1,0 +1,5 @@
+./handles.go
+_cgo_gotypes.go
+fatstd_go.cgo1.go
+string_exports.cgo1.go
+_cgo_import.go

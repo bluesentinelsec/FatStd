@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "fat/export.h"
 #include "fat/handle.h"
@@ -18,6 +19,8 @@ FATSTD_API fat_String fat_StringNewUTF8(const char *cstr);
 FATSTD_API fat_String fat_StringNewUTF8N(const char *bytes, size_t len);
 
 FATSTD_API fat_String fat_StringClone(fat_String s);
+
+FATSTD_API bool fat_StringContains(fat_String s, fat_String substr);
 
 FATSTD_API void fat_StringFree(fat_String s);
 
