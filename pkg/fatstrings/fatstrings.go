@@ -92,3 +92,27 @@ func Replace(s, old, new string, n int) string {
 func ReplaceAll(s, old, new string) string {
 	return strings.ReplaceAll(s, old, new)
 }
+
+func ToLower(s string) string {
+	return strings.ToLower(s)
+}
+
+func ToUpper(s string) string {
+	return strings.ToUpper(s)
+}
+
+func Index(s, substr string) int {
+	return strings.Index(s, substr)
+}
+
+func Count(s, substr string) int {
+	return strings.Count(s, substr)
+}
+
+func Compare(a, b string) int {
+	return strings.Compare(a, b)
+}
+
+func EqualFold(s, t string) bool {
+	return strings.EqualFold(s, t)
+}

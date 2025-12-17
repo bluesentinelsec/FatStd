@@ -5,10 +5,11 @@ Refer to the following documents for context on the project:
 Let's continue working on the fat strings subsystem.
 I want to onboard these functions:
 
-Split(s, sep string) []string
-SplitN(s, sep string, n int) []string
-Join(elems []string, sep string) string
-Replace(s, old, new string, n int) string
-ReplaceAll(s, old, new string) string
+ToLower(s string) string 
+ToUpper(s string) string
+Index(s, substr string) int
+Count(s, substr string) int
+Compare(a, b string) int
+EqualFold(s, t string) bool
 
 I expect the Go bindings, C bindings, and a unit test in Python.

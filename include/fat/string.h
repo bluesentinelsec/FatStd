@@ -48,6 +48,20 @@ FATSTD_API fat_String fat_StringReplace(fat_String s, fat_String old, fat_String
 
 FATSTD_API fat_String fat_StringReplaceAll(fat_String s, fat_String old, fat_String new_value);
 
+FATSTD_API fat_String fat_StringToLower(fat_String s);
+
+FATSTD_API fat_String fat_StringToUpper(fat_String s);
+
+// Returns the index of the first instance of `substr` in `s`, or -1 if `substr` is not present in `s`.
+FATSTD_API int fat_StringIndex(fat_String s, fat_String substr);
+
+FATSTD_API int fat_StringCount(fat_String s, fat_String substr);
+
+// Returns 0 if a == b, -1 if a < b, and +1 if a > b.
+FATSTD_API int fat_StringCompare(fat_String a, fat_String b);
+
+FATSTD_API bool fat_StringEqualFold(fat_String s, fat_String t);
+
 FATSTD_API void fat_StringFree(fat_String s);
 
 #ifdef __cplusplus

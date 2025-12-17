@@ -66,6 +66,30 @@ fat_String fat_StringReplaceAll(fat_String s, fat_String old, fat_String new_val
   return (fat_String)fatstd_go_string_replace_all((uintptr_t)s, (uintptr_t)old, (uintptr_t)new_value);
 }
 
+fat_String fat_StringToLower(fat_String s) {
+  return (fat_String)fatstd_go_string_to_lower((uintptr_t)s);
+}
+
+fat_String fat_StringToUpper(fat_String s) {
+  return (fat_String)fatstd_go_string_to_upper((uintptr_t)s);
+}
+
+int fat_StringIndex(fat_String s, fat_String substr) {
+  return (int)fatstd_go_string_index((uintptr_t)s, (uintptr_t)substr);
+}
+
+int fat_StringCount(fat_String s, fat_String substr) {
+  return (int)fatstd_go_string_count((uintptr_t)s, (uintptr_t)substr);
+}
+
+int fat_StringCompare(fat_String a, fat_String b) {
+  return (int)fatstd_go_string_compare((uintptr_t)a, (uintptr_t)b);
+}
+
+bool fat_StringEqualFold(fat_String s, fat_String t) {
+  return (bool)fatstd_go_string_equal_fold((uintptr_t)s, (uintptr_t)t);
+}
+
 void fat_StringFree(fat_String s) {
   fatstd_go_string_free((uintptr_t)s);
 }

@@ -60,6 +60,20 @@ class TestString(unittest.TestCase):
         cls.fat_StringReplaceAll = bind(
             "fat_StringReplaceAll", argtypes=[fat_string, fat_string, fat_string], restype=fat_string
         )
+        cls.fat_StringToLower = bind("fat_StringToLower", argtypes=[fat_string], restype=fat_string)
+        cls.fat_StringToUpper = bind("fat_StringToUpper", argtypes=[fat_string], restype=fat_string)
+        cls.fat_StringIndex = bind(
+            "fat_StringIndex", argtypes=[fat_string, fat_string], restype=ctypes.c_int
+        )
+        cls.fat_StringCount = bind(
+            "fat_StringCount", argtypes=[fat_string, fat_string], restype=ctypes.c_int
+        )
+        cls.fat_StringCompare = bind(
+            "fat_StringCompare", argtypes=[fat_string, fat_string], restype=ctypes.c_int
+        )
+        cls.fat_StringEqualFold = bind(
+            "fat_StringEqualFold", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
+        )
         cls.fat_StringFree = bind("fat_StringFree", argtypes=[fat_string], restype=None)
 
     def _assert_string_equal(self, a, b, *, message: str | None = None) -> None:
@@ -364,4 +378,66 @@ class TestString(unittest.TestCase):
         self.fat_StringFree(replaced_1)
         self.fat_StringFree(new)
         self.fat_StringFree(old)
+        self.fat_StringFree(s)
+
+    def test_to_lower_to_upper(self) -> None:
+        s = self.fat_StringNewUTF8(b"LoReM iPsUm")
+        self.assertNotEqual(0, s)
+
+        lower = self.fat_StringToLower(s)
+        self.assertNotEqual(0, lower)
+        expected_lower = self.fat_StringNewUTF8(b"lorem ipsum")
+        self.assertNotEqual(0, expected_lower)
+        self._assert_string_equal(lower, expected_lower)
+
+        upper = self.fat_StringToUpper(s)
+        self.assertNotEqual(0, upper)
+        expected_upper = self.fat_StringNewUTF8(b"LOREM IPSUM")
+        self.assertNotEqual(0, expected_upper)
+        self._assert_string_equal(upper, expected_upper)
+
+        self.fat_StringFree(expected_upper)
+        self.fat_StringFree(upper)
+        self.fat_StringFree(expected_lower)
+        self.fat_StringFree(lower)
+        self.fat_StringFree(s)
+
+    def test_index_count_compare_equal_fold(self) -> None:
+        s = self.fat_StringNewUTF8(b"abababa")
+        self.assertNotEqual(0, s)
+
+        sub = self.fat_StringNewUTF8(b"aba")
+        self.assertNotEqual(0, sub)
+        self.assertEqual(0, self.fat_StringIndex(s, sub))
+        self.assertEqual(2, self.fat_StringCount(s, sub))
+
+        missing = self.fat_StringNewUTF8(b"zzz")
+        self.assertNotEqual(0, missing)
+        self.assertEqual(-1, self.fat_StringIndex(s, missing))
+        self.assertEqual(0, self.fat_StringCount(s, missing))
+
+        a = self.fat_StringNewUTF8(b"a")
+        b = self.fat_StringNewUTF8(b"b")
+        a2 = self.fat_StringNewUTF8(b"a")
+        self.assertNotEqual(0, a)
+        self.assertNotEqual(0, b)
+        self.assertNotEqual(0, a2)
+        self.assertLess(self.fat_StringCompare(a, b), 0)
+        self.assertGreater(self.fat_StringCompare(b, a), 0)
+        self.assertEqual(0, self.fat_StringCompare(a, a2))
+
+        fold1 = self.fat_StringNewUTF8(b"GoLang")
+        fold2 = self.fat_StringNewUTF8(b"golang")
+        self.assertNotEqual(0, fold1)
+        self.assertNotEqual(0, fold2)
+        self.assertTrue(self.fat_StringEqualFold(fold1, fold2))
+        self.assertFalse(self.fat_StringEqualFold(fold1, a))
+
+        self.fat_StringFree(fold2)
+        self.fat_StringFree(fold1)
+        self.fat_StringFree(a2)
+        self.fat_StringFree(b)
+        self.fat_StringFree(a)
+        self.fat_StringFree(missing)
+        self.fat_StringFree(sub)
         self.fat_StringFree(s)

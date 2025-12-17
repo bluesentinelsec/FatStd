@@ -184,6 +184,49 @@ func fatstd_go_string_replace_all(sHandle C.uintptr_t, oldHandle C.uintptr_t, ne
 	return C.uintptr_t(fatstdStringNewFromGoString(replaced))
 }
 
+//export fatstd_go_string_to_lower
+func fatstd_go_string_to_lower(handle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(handle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.ToLower(s.Value())))
+}
+
+//export fatstd_go_string_to_upper
+func fatstd_go_string_to_upper(handle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(handle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.ToUpper(s.Value())))
+}
+
+//export fatstd_go_string_index
+func fatstd_go_string_index(sHandle C.uintptr_t, substrHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	substr := fatstdStringFromHandle(uintptr(substrHandle))
+	return C.int(fatstrings.Index(s.Value(), substr.Value()))
+}
+
+//export fatstd_go_string_count
+func fatstd_go_string_count(sHandle C.uintptr_t, substrHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	substr := fatstdStringFromHandle(uintptr(substrHandle))
+	return C.int(fatstrings.Count(s.Value(), substr.Value()))
+}
+
+//export fatstd_go_string_compare
+func fatstd_go_string_compare(aHandle C.uintptr_t, bHandle C.uintptr_t) C.int {
+	a := fatstdStringFromHandle(uintptr(aHandle))
+	b := fatstdStringFromHandle(uintptr(bHandle))
+	return C.int(fatstrings.Compare(a.Value(), b.Value()))
+}
+
+//export fatstd_go_string_equal_fold
+func fatstd_go_string_equal_fold(sHandle C.uintptr_t, tHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	t := fatstdStringFromHandle(uintptr(tHandle))
+	if fatstrings.EqualFold(s.Value(), t.Value()) {
+		return 1
+	}
+	return 0
+}
+
 //export fatstd_go_string_array_free
 func fatstd_go_string_array_free(handle C.uintptr_t) {
 	if handle == 0 {
