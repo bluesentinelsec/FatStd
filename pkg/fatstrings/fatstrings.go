@@ -6,8 +6,16 @@ type String struct {
 	value string
 }
 
+type StringArray struct {
+	values []string
+}
+
 func NewUTF8(value string) *String {
 	return &String{value: value}
+}
+
+func NewStringArray(values []string) *StringArray {
+	return &StringArray{values: values}
 }
 
 func (s *String) Value() string {
@@ -15,6 +23,30 @@ func (s *String) Value() string {
 		panic("fatstrings.String.Value: receiver is nil")
 	}
 	return s.value
+}
+
+func (a *StringArray) Len() int {
+	if a == nil {
+		panic("fatstrings.StringArray.Len: receiver is nil")
+	}
+	return len(a.values)
+}
+
+func (a *StringArray) Get(index int) string {
+	if a == nil {
+		panic("fatstrings.StringArray.Get: receiver is nil")
+	}
+	if index < 0 || index >= len(a.values) {
+		panic("fatstrings.StringArray.Get: index out of range")
+	}
+	return a.values[index]
+}
+
+func (a *StringArray) Values() []string {
+	if a == nil {
+		panic("fatstrings.StringArray.Values: receiver is nil")
+	}
+	return a.values
 }
 
 func Clone(s string) string {
@@ -39,4 +71,24 @@ func TrimSpace(s string) string {
 
 func Trim(s, cutset string) string {
 	return strings.Trim(s, cutset)
+}
+
+func Split(s, sep string) []string {
+	return strings.Split(s, sep)
+}
+
+func SplitN(s, sep string, n int) []string {
+	return strings.SplitN(s, sep, n)
+}
+
+func Join(elems []string, sep string) string {
+	return strings.Join(elems, sep)
+}
+
+func Replace(s, old, new string, n int) string {
+	return strings.Replace(s, old, new, n)
+}
+
+func ReplaceAll(s, old, new string) string {
+	return strings.ReplaceAll(s, old, new)
 }

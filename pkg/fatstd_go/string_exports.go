@@ -17,6 +17,10 @@ func fatstdStringNewFromGoString(value string) uintptr {
 	return fatstdHandles.register(fatstrings.NewUTF8(value))
 }
 
+func fatstdStringArrayNew(values []string) uintptr {
+	return fatstdHandles.register(fatstrings.NewStringArray(values))
+}
+
 func fatstdStringFromHandle(handle uintptr) *fatstrings.String {
 	if handle == 0 {
 		panic("fatstdStringFromHandle: handle is 0")
@@ -30,6 +34,21 @@ func fatstdStringFromHandle(handle uintptr) *fatstrings.String {
 		panic("fatstdStringFromHandle: handle is not a fat string")
 	}
 	return s
+}
+
+func fatstdStringArrayFromHandle(handle uintptr) *fatstrings.StringArray {
+	if handle == 0 {
+		panic("fatstdStringArrayFromHandle: handle is 0")
+	}
+	value, ok := fatstdHandles.get(handle)
+	if !ok {
+		panic("fatstdStringArrayFromHandle: invalid handle")
+	}
+	a, ok := value.(*fatstrings.StringArray)
+	if !ok {
+		panic("fatstdStringArrayFromHandle: handle is not a fat string array")
+	}
+	return a
 }
 
 //export fatstd_go_string_new_utf8_cstr
@@ -108,6 +127,76 @@ func fatstd_go_string_trim(sHandle C.uintptr_t, cutsetHandle C.uintptr_t) C.uint
 	cutset := fatstdStringFromHandle(uintptr(cutsetHandle))
 	trimmed := fatstrings.Trim(s.Value(), cutset.Value())
 	return C.uintptr_t(fatstdStringNewFromGoString(trimmed))
+}
+
+//export fatstd_go_string_split
+func fatstd_go_string_split(sHandle C.uintptr_t, sepHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	sep := fatstdStringFromHandle(uintptr(sepHandle))
+	return C.uintptr_t(fatstdStringArrayNew(fatstrings.Split(s.Value(), sep.Value())))
+}
+
+//export fatstd_go_string_split_n
+func fatstd_go_string_split_n(sHandle C.uintptr_t, sepHandle C.uintptr_t, n C.int) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	sep := fatstdStringFromHandle(uintptr(sepHandle))
+	return C.uintptr_t(fatstdStringArrayNew(fatstrings.SplitN(s.Value(), sep.Value(), int(n))))
+}
+
+//export fatstd_go_string_array_len
+func fatstd_go_string_array_len(arrayHandle C.uintptr_t) C.size_t {
+	a := fatstdStringArrayFromHandle(uintptr(arrayHandle))
+	return C.size_t(a.Len())
+}
+
+//export fatstd_go_string_array_get
+func fatstd_go_string_array_get(arrayHandle C.uintptr_t, index C.size_t) C.uintptr_t {
+	a := fatstdStringArrayFromHandle(uintptr(arrayHandle))
+	if index > C.size_t(2147483647) {
+		panic("fatstd_go_string_array_get: index too large")
+	}
+	value := a.Get(int(index))
+	return C.uintptr_t(fatstdStringNewFromGoString(value))
+}
+
+//export fatstd_go_string_join
+func fatstd_go_string_join(arrayHandle C.uintptr_t, sepHandle C.uintptr_t) C.uintptr_t {
+	a := fatstdStringArrayFromHandle(uintptr(arrayHandle))
+	sep := fatstdStringFromHandle(uintptr(sepHandle))
+	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.Join(a.Values(), sep.Value())))
+}
+
+//export fatstd_go_string_replace
+func fatstd_go_string_replace(sHandle C.uintptr_t, oldHandle C.uintptr_t, newHandle C.uintptr_t, n C.int) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	old := fatstdStringFromHandle(uintptr(oldHandle))
+	newValue := fatstdStringFromHandle(uintptr(newHandle))
+	replaced := fatstrings.Replace(s.Value(), old.Value(), newValue.Value(), int(n))
+	return C.uintptr_t(fatstdStringNewFromGoString(replaced))
+}
+
+//export fatstd_go_string_replace_all
+func fatstd_go_string_replace_all(sHandle C.uintptr_t, oldHandle C.uintptr_t, newHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	old := fatstdStringFromHandle(uintptr(oldHandle))
+	newValue := fatstdStringFromHandle(uintptr(newHandle))
+	replaced := fatstrings.ReplaceAll(s.Value(), old.Value(), newValue.Value())
+	return C.uintptr_t(fatstdStringNewFromGoString(replaced))
+}
+
+//export fatstd_go_string_array_free
+func fatstd_go_string_array_free(handle C.uintptr_t) {
+	if handle == 0 {
+		panic("fatstd_go_string_array_free: handle is 0")
+	}
+
+	value, ok := fatstdHandles.take(uintptr(handle))
+	if !ok {
+		panic("fatstd_go_string_array_free: invalid handle")
+	}
+	if _, ok := value.(*fatstrings.StringArray); !ok {
+		panic("fatstd_go_string_array_free: handle is not a fat string array")
+	}
 }
 
 //export fatstd_go_string_free
