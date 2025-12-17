@@ -28,6 +28,10 @@ go.work.sum
 .env
 .DS_Store
 
+# Build artifacts (CMake)
+build/
+build_*/
+
 # Python
 __pycache__/
 *.py[cod]
