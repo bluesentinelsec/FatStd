@@ -27,6 +27,10 @@ class TestString(unittest.TestCase):
         cls.fat_StringHasSuffix = bind(
             "fat_StringHasSuffix", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
         )
+        cls.fat_StringTrimSpace = bind("fat_StringTrimSpace", argtypes=[fat_string], restype=fat_string)
+        cls.fat_StringTrim = bind(
+            "fat_StringTrim", argtypes=[fat_string, fat_string], restype=fat_string
+        )
         cls.fat_StringFree = bind("fat_StringFree", argtypes=[fat_string], restype=None)
 
     def test_create_clone_free_cstr(self) -> None:
@@ -140,4 +144,86 @@ class TestString(unittest.TestCase):
 
         self.fat_StringFree(suffix)
         self.fat_StringFree(prefix)
+        self.fat_StringFree(s)
+
+    def test_trim_space(self) -> None:
+        s = self.fat_StringNewUTF8(b"  lorem ipsum  ")
+        self.assertNotEqual(0, s)
+
+        trimmed = self.fat_StringTrimSpace(s)
+        self.assertNotEqual(0, trimmed)
+        self.assertNotEqual(s, trimmed)
+
+        space = self.fat_StringNewUTF8(b" ")
+        self.assertNotEqual(0, space)
+
+        self.assertFalse(self.fat_StringHasPrefix(trimmed, space))
+        self.assertFalse(self.fat_StringHasSuffix(trimmed, space))
+
+        lorem = self.fat_StringNewUTF8(b"lorem")
+        self.assertNotEqual(0, lorem)
+        self.assertTrue(self.fat_StringHasPrefix(trimmed, lorem))
+
+        self.fat_StringFree(lorem)
+        self.fat_StringFree(space)
+        self.fat_StringFree(trimmed)
+        self.fat_StringFree(s)
+
+    def test_trim_cutset_basic(self) -> None:
+        s = self.fat_StringNewUTF8(b"...lorem ipsum...")
+        self.assertNotEqual(0, s)
+
+        cutset = self.fat_StringNewUTF8(b".")
+        self.assertNotEqual(0, cutset)
+
+        trimmed = self.fat_StringTrim(s, cutset)
+        self.assertNotEqual(0, trimmed)
+        self.assertNotEqual(s, trimmed)
+
+        dot = self.fat_StringNewUTF8(b".")
+        self.assertNotEqual(0, dot)
+
+        self.assertFalse(self.fat_StringHasPrefix(trimmed, dot))
+        self.assertFalse(self.fat_StringHasSuffix(trimmed, dot))
+
+        needle = self.fat_StringNewUTF8(b"lorem")
+        self.assertNotEqual(0, needle)
+        self.assertTrue(self.fat_StringContains(trimmed, needle))
+
+        self.fat_StringFree(needle)
+        self.fat_StringFree(dot)
+        self.fat_StringFree(trimmed)
+        self.fat_StringFree(cutset)
+        self.fat_StringFree(s)
+
+    def test_trim_cutset_embedded_nul(self) -> None:
+        s_bytes = b"\x00abc\x00"
+        s_raw = ctypes.create_string_buffer(s_bytes, len(s_bytes))
+        s = self.fat_StringNewUTF8N(ctypes.addressof(s_raw), len(s_raw.raw))
+        self.assertNotEqual(0, s)
+
+        cutset_bytes = b"\x00"
+        cutset_raw = ctypes.create_string_buffer(cutset_bytes, len(cutset_bytes))
+        cutset = self.fat_StringNewUTF8N(ctypes.addressof(cutset_raw), len(cutset_raw.raw))
+        self.assertNotEqual(0, cutset)
+
+        trimmed = self.fat_StringTrim(s, cutset)
+        self.assertNotEqual(0, trimmed)
+
+        nul_bytes = b"\x00"
+        nul_raw = ctypes.create_string_buffer(nul_bytes, len(nul_bytes))
+        nul = self.fat_StringNewUTF8N(ctypes.addressof(nul_raw), len(nul_raw.raw))
+        self.assertNotEqual(0, nul)
+
+        self.assertFalse(self.fat_StringHasPrefix(trimmed, nul))
+        self.assertFalse(self.fat_StringHasSuffix(trimmed, nul))
+
+        needle = self.fat_StringNewUTF8(b"abc")
+        self.assertNotEqual(0, needle)
+        self.assertTrue(self.fat_StringContains(trimmed, needle))
+
+        self.fat_StringFree(needle)
+        self.fat_StringFree(nul)
+        self.fat_StringFree(trimmed)
+        self.fat_StringFree(cutset)
         self.fat_StringFree(s)

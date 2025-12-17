@@ -26,6 +26,10 @@ FATSTD_API bool fat_StringHasPrefix(fat_String s, fat_String prefix);
 
 FATSTD_API bool fat_StringHasSuffix(fat_String s, fat_String suffix);
 
+FATSTD_API fat_String fat_StringTrimSpace(fat_String s);
+
+FATSTD_API fat_String fat_StringTrim(fat_String s, fat_String cutset);
+
 FATSTD_API void fat_StringFree(fat_String s);
 
 #ifdef __cplusplus

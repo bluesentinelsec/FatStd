@@ -32,3 +32,11 @@ func HasPrefix(s, prefix string) bool {
 func HasSuffix(s, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
+
+func TrimSpace(s string) string {
+	return strings.TrimSpace(s)
+}
+
+func Trim(s, cutset string) string {
+	return strings.Trim(s, cutset)
+}

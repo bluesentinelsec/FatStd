@@ -5,7 +5,7 @@ Refer to the following documents for context on the project:
 Let's continue working on the fat strings subsystem.
 I want to onboard these functions:
 
-HasPrefix(s, prefix string) bool
-HasSuffix(s, suffix string) bool
+TrimSpace(s string) string
+Trim(s, cutset string) string
 
 I expect the Go bindings, C bindings, and a unit test in Python.

@@ -26,6 +26,14 @@ bool fat_StringHasSuffix(fat_String s, fat_String suffix) {
   return (bool)fatstd_go_string_has_suffix((uintptr_t)s, (uintptr_t)suffix);
 }
 
+fat_String fat_StringTrimSpace(fat_String s) {
+  return (fat_String)fatstd_go_string_trim_space((uintptr_t)s);
+}
+
+fat_String fat_StringTrim(fat_String s, fat_String cutset) {
+  return (fat_String)fatstd_go_string_trim((uintptr_t)s, (uintptr_t)cutset);
+}
+
 void fat_StringFree(fat_String s) {
   fatstd_go_string_free((uintptr_t)s);
 }

@@ -95,6 +95,21 @@ func fatstd_go_string_has_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t) 
 	return 0
 }
 
+//export fatstd_go_string_trim_space
+func fatstd_go_string_trim_space(handle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(handle))
+	trimmed := fatstrings.TrimSpace(s.Value())
+	return C.uintptr_t(fatstdStringNewFromGoString(trimmed))
+}
+
+//export fatstd_go_string_trim
+func fatstd_go_string_trim(sHandle C.uintptr_t, cutsetHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	cutset := fatstdStringFromHandle(uintptr(cutsetHandle))
+	trimmed := fatstrings.Trim(s.Value(), cutset.Value())
+	return C.uintptr_t(fatstdStringNewFromGoString(trimmed))
+}
+
 //export fatstd_go_string_free
 func fatstd_go_string_free(handle C.uintptr_t) {
 	if handle == 0 {
