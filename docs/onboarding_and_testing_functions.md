@@ -25,6 +25,8 @@ When onboarding any new function, keep these rules non-negotiable:
 - `include/fat/*.h` — public headers for the C API (installed/consumed by users)
   - Each module gets its own header: `include/fat/<module>.h`
   - Use `FATSTD_API` on public declarations (from `include/fat/export.h`)
+- `include/fat/handle.h` — canonical handle typedef used by Go-backed modules
+  - Prefer `fat_Handle` (currently `uintptr_t`) and define module handle aliases as `typedef fat_Handle fat_<Thing>;`
 - `src/*.c` — C implementation files and thin wrappers around Go exports
   - Prefer `src/fat_<module>.c` per module
 - `pkg/` — Go implementation code compiled into the library
@@ -114,6 +116,7 @@ In `pkg/fatstd_go/*.go` (must remain `package main`):
 - Add a `//export <symbol>` comment directly above the exported function.
 - Exported symbols should be **internal**-looking and namespaced, e.g. `fatstd_go_<module>_<op>`.
 - Keep exported signatures simple (C scalar types, pointers to C memory, and/or integer-ish handles).
+  - Prefer C-native types like `uintptr_t`/`size_t` over cgo’s `Go*` typedefs for “boundary” signatures.
 
 ### 4) Wrap it in C (public API stays `fat_*`)
 
@@ -127,6 +130,15 @@ In `include/fat/<module>.h`:
 - Declare the public `fat_...` function with `FATSTD_API`.
 
 This keeps the Go-exported namespace private to the library, while users only see `fat_*`.
+
+## Pattern: ergonomic + explicit-length constructors (strings/bytes)
+
+For “byte input” APIs, prefer offering both:
+
+- A convenience constructor for NUL-terminated input (e.g. `fat_StringNewUTF8(const char *cstr)`)
+- A length-based constructor for explicit spans and embedded NULs (e.g. `fat_StringNewUTF8N(const char *bytes, size_t len)`)
+
+This keeps the common case ergonomic while preserving full generality.
 
 ### 5) Make sure CMake rebuilds Go when Go code changes
 
