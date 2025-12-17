@@ -22,6 +22,10 @@ FATSTD_API fat_String fat_StringClone(fat_String s);
 
 FATSTD_API bool fat_StringContains(fat_String s, fat_String substr);
 
+FATSTD_API bool fat_StringHasPrefix(fat_String s, fat_String prefix);
+
+FATSTD_API bool fat_StringHasSuffix(fat_String s, fat_String suffix);
+
 FATSTD_API void fat_StringFree(fat_String s);
 
 #ifdef __cplusplus

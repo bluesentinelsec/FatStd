@@ -24,3 +24,11 @@ func Clone(s string) string {
 func Contains(s, substr string) bool {
 	return strings.Contains(s, substr)
 }
+
+func HasPrefix(s, prefix string) bool {
+	return strings.HasPrefix(s, prefix)
+}
+
+func HasSuffix(s, suffix string) bool {
+	return strings.HasSuffix(s, suffix)
+}

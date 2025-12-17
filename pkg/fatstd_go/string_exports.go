@@ -75,6 +75,26 @@ func fatstd_go_string_contains(aHandle C.uintptr_t, bHandle C.uintptr_t) C.int {
 	return 0
 }
 
+//export fatstd_go_string_has_prefix
+func fatstd_go_string_has_prefix(sHandle C.uintptr_t, prefixHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	prefix := fatstdStringFromHandle(uintptr(prefixHandle))
+	if fatstrings.HasPrefix(s.Value(), prefix.Value()) {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_string_has_suffix
+func fatstd_go_string_has_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t) C.int {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	suffix := fatstdStringFromHandle(uintptr(suffixHandle))
+	if fatstrings.HasSuffix(s.Value(), suffix.Value()) {
+		return 1
+	}
+	return 0
+}
+
 //export fatstd_go_string_free
 func fatstd_go_string_free(handle C.uintptr_t) {
 	if handle == 0 {

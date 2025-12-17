@@ -21,6 +21,12 @@ class TestString(unittest.TestCase):
         cls.fat_StringContains = bind(
             "fat_StringContains", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
         )
+        cls.fat_StringHasPrefix = bind(
+            "fat_StringHasPrefix", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
+        )
+        cls.fat_StringHasSuffix = bind(
+            "fat_StringHasSuffix", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
+        )
         cls.fat_StringFree = bind("fat_StringFree", argtypes=[fat_string], restype=None)
 
     def test_create_clone_free_cstr(self) -> None:
@@ -78,3 +84,60 @@ class TestString(unittest.TestCase):
 
         self.fat_StringFree(needle)
         self.fat_StringFree(hay)
+
+    def test_has_prefix_basic(self) -> None:
+        s = self.fat_StringNewUTF8(b"lorem ipsum")
+        self.assertNotEqual(0, s)
+
+        prefix_yes = self.fat_StringNewUTF8(b"lorem")
+        self.assertNotEqual(0, prefix_yes)
+
+        prefix_no = self.fat_StringNewUTF8(b"ipsum")
+        self.assertNotEqual(0, prefix_no)
+
+        self.assertTrue(self.fat_StringHasPrefix(s, prefix_yes))
+        self.assertFalse(self.fat_StringHasPrefix(s, prefix_no))
+
+        self.fat_StringFree(prefix_no)
+        self.fat_StringFree(prefix_yes)
+        self.fat_StringFree(s)
+
+    def test_has_suffix_basic(self) -> None:
+        s = self.fat_StringNewUTF8(b"lorem ipsum")
+        self.assertNotEqual(0, s)
+
+        suffix_yes = self.fat_StringNewUTF8(b"ipsum")
+        self.assertNotEqual(0, suffix_yes)
+
+        suffix_no = self.fat_StringNewUTF8(b"lorem")
+        self.assertNotEqual(0, suffix_no)
+
+        self.assertTrue(self.fat_StringHasSuffix(s, suffix_yes))
+        self.assertFalse(self.fat_StringHasSuffix(s, suffix_no))
+
+        self.fat_StringFree(suffix_no)
+        self.fat_StringFree(suffix_yes)
+        self.fat_StringFree(s)
+
+    def test_has_prefix_suffix_embedded_nul(self) -> None:
+        s_bytes = b"abc\x00def"
+        s_raw = ctypes.create_string_buffer(s_bytes, len(s_bytes))
+        s = self.fat_StringNewUTF8N(ctypes.addressof(s_raw), len(s_raw.raw))
+        self.assertNotEqual(0, s)
+
+        prefix_bytes = b"abc\x00"
+        prefix_raw = ctypes.create_string_buffer(prefix_bytes, len(prefix_bytes))
+        prefix = self.fat_StringNewUTF8N(ctypes.addressof(prefix_raw), len(prefix_raw.raw))
+        self.assertNotEqual(0, prefix)
+
+        suffix_bytes = b"\x00def"
+        suffix_raw = ctypes.create_string_buffer(suffix_bytes, len(suffix_bytes))
+        suffix = self.fat_StringNewUTF8N(ctypes.addressof(suffix_raw), len(suffix_raw.raw))
+        self.assertNotEqual(0, suffix)
+
+        self.assertTrue(self.fat_StringHasPrefix(s, prefix))
+        self.assertTrue(self.fat_StringHasSuffix(s, suffix))
+
+        self.fat_StringFree(suffix)
+        self.fat_StringFree(prefix)
+        self.fat_StringFree(s)
