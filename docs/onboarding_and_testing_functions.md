@@ -5,7 +5,7 @@
 
 # Onboarding and Testing Functions (Go + C)
 
-This document defines the repeatable workflow for adding new APIs to `libfatstd` (the C library) and validating them end-to-end through the existing Python `ctypes` smoke tests.
+This document defines the repeatable workflow for adding new APIs to `libfatstd` (the C library) and validating them end-to-end through the Python `unittest` + `ctypes` smoke tests.
 
 FatStd is **C-first**: the public surface area is a stable, C-compatible API. Go is an internal implementation detail compiled into the library.
 
@@ -32,8 +32,10 @@ When onboarding any new function, keep these rules non-negotiable:
 - `pkg/` — Go implementation code compiled into the library
   - `pkg/fatstd_go/` is the **single** `package main` built with `-buildmode=c-archive`
   - Add real functionality in normal Go packages under `pkg/<module>/...`, then call into them from `pkg/fatstd_go`
-- `scripts/python_tests/` — end-to-end tests that load the **shared** library via `ctypes`
-  - Current entrypoint: `scripts/python_tests/test_fatstd_shared.py`
+- `scripts/python_tests/` — end-to-end tests that load the **shared** library via `ctypes` and run via `unittest`
+  - Harness / entrypoint: `scripts/python_tests/test_fatstd_shared.py`
+  - Test modules: `scripts/python_tests/fatstd_tests/test_*.py`
+  - Shared helpers: `scripts/python_tests/fatstd_test_support.py`
 
 ## Naming conventions (symbols, files, packages)
 
@@ -51,13 +53,14 @@ When onboarding any new function, keep these rules non-negotiable:
 FatStd’s canonical build system is CMake; this repo also provides a convenience `Makefile`.
 
 - Static build: `make build` (default) or `make static`
-- Shared build (needed for the Python `ctypes` tests): `make shared`
+- Shared build (needed for the Python tests): `make shared`
 - Run end-to-end tests: `make test`
 
 Equivalent CMake commands:
 
 - Configure + build shared: `cmake -S . -B build -DFATSTD_BUILD_SHARED=ON && cmake --build build`
 - Run tests: `python3 scripts/python_tests/test_fatstd_shared.py --build-dir build`
+- Run tests (verbose): `python3 scripts/python_tests/test_fatstd_shared.py --build-dir build -v`
 
 ## Onboarding a **C-only** function
 
@@ -77,11 +80,10 @@ Use this path when the implementation is pure C and does not need the Go runtime
 4. **Register the source file with CMake**
    - Add the new `.c` file to `target_sources(fatstd PRIVATE ...)` in `CMakeLists.txt`.
 
-5. **Add a Python `ctypes` test**
-   - Edit `scripts/python_tests/test_fatstd_shared.py`:
-     - Add a `test_<something>(lib)` function.
-     - Set `argtypes`/`restype` exactly.
-     - Call the test from `main()` so it runs under `make test`.
+5. **Add a Python `unittest`**
+   - Add a new module under `scripts/python_tests/fatstd_tests/` (example: `scripts/python_tests/fatstd_tests/test_string.py`).
+   - Write `unittest.TestCase` tests and bind functions via `scripts/python_tests/fatstd_test_support.py`.
+   - Always set `argtypes`/`restype` exactly (`ctypes` defaults are unsafe).
 
 6. **Build + run**
    - `make test`
@@ -148,7 +150,7 @@ When you add new Go files/packages under `pkg/`, ensure the custom command’s `
 
 ### 6) Add an end-to-end Python test
 
-Update `scripts/python_tests/test_fatstd_shared.py` to:
+Add or update a module under `scripts/python_tests/fatstd_tests/` to:
 
 - call the public `fat_*` function(s) you added
 - validate basic behavior + at least one edge case (invalid args, empty input, etc.)
@@ -157,12 +159,13 @@ Update `scripts/python_tests/test_fatstd_shared.py` to:
 
 - `make test`
 
-## Adding tests: conventions
+## Adding tests: conventions (Python)
 
-In `scripts/python_tests/test_fatstd_shared.py`:
+In `scripts/python_tests/fatstd_tests/test_*.py`:
 
-- Name test helpers as `test_<api_or_module>(lib, ...)`.
-- Always set `lib.<symbol>.argtypes` and `lib.<symbol>.restype` (ctypes defaults are unsafe).
+- Use `unittest.TestCase` classes and `test_*` methods.
+- Bind symbols once per class in `setUpClass()` via `scripts/python_tests/fatstd_test_support.py`.
+- Always set `argtypes` and `restype` (ctypes defaults are unsafe).
 - Prefer small, deterministic tests (no network; avoid filesystem unless that module requires it).
 
 ## End-to-end checklist (PR-quality)
@@ -170,5 +173,5 @@ In `scripts/python_tests/test_fatstd_shared.py`:
 - Public header added/updated in `include/fat/<module>.h`
 - Implementation added/updated in `src/fat_<module>.c` (or module-appropriate file)
 - `CMakeLists.txt` updated so the file is compiled and/or Go rebuild triggers are correct
-- Python smoke test added/updated in `scripts/python_tests/test_fatstd_shared.py`
+- Python smoke test added/updated under `scripts/python_tests/fatstd_tests/`
 - `make test` passes locally
