@@ -6,6 +6,8 @@ option(FATSTD_BUILD_SHARED "Build FatStd as a shared library" OFF)
 
 find_program(FATSTD_GO_EXECUTABLE go REQUIRED)
 
+include(FetchContent)
+
 set(fatstd_generated_include_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/include")
 file(MAKE_DIRECTORY "${fatstd_generated_include_dir}/fat")
 
@@ -79,6 +81,7 @@ target_sources(
     src/fat_bytes.c
     src/fat_bytes_buffer.c
     src/fat_bytes_reader.c
+    src/fat_sdl3_link.c
 )
 
 target_include_directories(
@@ -89,6 +92,49 @@ target_include_directories(
 )
 
 target_link_libraries(fatstd PRIVATE fatstd_go)
+
+# --- SDL3 (FetchContent) ---
+set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library" FORCE)
+set(SDL_STATIC ON CACHE BOOL "Build SDL as a static library" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "Build SDL tests" FORCE)
+set(SDL_TEST_LIBRARY OFF CACHE BOOL "Build SDL test library" FORCE)
+
+FetchContent_Declare(
+  SDL3
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-3.2.28
+)
+
+FetchContent_MakeAvailable(SDL3)
+
+set(fatstd_sdl3_target "")
+if(TARGET SDL3::SDL3-static)
+  set(fatstd_sdl3_target SDL3::SDL3-static)
+elseif(TARGET SDL3::SDL3)
+  set(fatstd_sdl3_target SDL3::SDL3)
+elseif(TARGET SDL3-static)
+  set(fatstd_sdl3_target SDL3-static)
+elseif(TARGET SDL3)
+  set(fatstd_sdl3_target SDL3)
+else()
+  message(FATAL_ERROR "SDL3 target not found after FetchContent_MakeAvailable(SDL3)")
+endif()
+
+# Expose SDL3 to consumers linking fatstd, and prefer static SDL linkage.
+target_link_libraries(fatstd PUBLIC ${fatstd_sdl3_target})
+
+# When SDL is built as a static archive and fatstd is a shared library, linkers may
+# drop SDL object files if no symbols are referenced directly by fatstd consumers.
+# Force SDL to be pulled into libfatstd.
+if(FATSTD_BUILD_SHARED)
+  if(APPLE)
+    target_link_options(fatstd PRIVATE "LINKER:-force_load,$<TARGET_FILE:${fatstd_sdl3_target}>")
+  elseif(MSVC)
+    target_link_options(fatstd PRIVATE "/WHOLEARCHIVE:$<TARGET_FILE:${fatstd_sdl3_target}>")
+  else()
+    target_link_options(fatstd PRIVATE "LINKER:--whole-archive,$<TARGET_FILE:${fatstd_sdl3_target}>,--no-whole-archive")
+  endif()
+endif()
 
 set_target_properties(
   fatstd
