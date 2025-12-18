@@ -82,6 +82,7 @@ target_sources(
     src/fat_bytes_buffer.c
     src/fat_bytes_reader.c
     src/fat_sdl3_link.c
+    src/fat_raylib_link.c
 )
 
 target_include_directories(
@@ -133,6 +134,47 @@ if(FATSTD_BUILD_SHARED)
     target_link_options(fatstd PRIVATE "/WHOLEARCHIVE:$<TARGET_FILE:${fatstd_sdl3_target}>")
   else()
     target_link_options(fatstd PRIVATE "LINKER:--whole-archive,$<TARGET_FILE:${fatstd_sdl3_target}>,--no-whole-archive")
+  endif()
+endif()
+
+# --- raylib (FetchContent) ---
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build libraries as shared" FORCE)
+set(BUILD_EXAMPLES OFF CACHE BOOL "Build raylib examples" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "Build raylib games" FORCE)
+
+FetchContent_Declare(
+  raylib
+  GIT_REPOSITORY https://github.com/raysan5/raylib.git
+  GIT_TAG 5.5
+)
+
+if(APPLE)
+  enable_language(OBJC)
+endif()
+
+FetchContent_MakeAvailable(raylib)
+
+set(fatstd_raylib_target "")
+if(TARGET raylib)
+  set(fatstd_raylib_target raylib)
+elseif(TARGET raylib_static)
+  set(fatstd_raylib_target raylib_static)
+else()
+  message(FATAL_ERROR "raylib target not found after FetchContent_MakeAvailable(raylib)")
+endif()
+
+# raylib is statically linked into libfatstd (symbols are available to consumers),
+# but we keep the CMake dependency PRIVATE so exporting fatstd doesn't require exporting
+# raylib and its internal dependency targets (e.g. glfw).
+target_link_libraries(fatstd PRIVATE ${fatstd_raylib_target})
+
+if(FATSTD_BUILD_SHARED)
+  if(APPLE)
+    target_link_options(fatstd PRIVATE "LINKER:-force_load,$<TARGET_FILE:${fatstd_raylib_target}>")
+  elseif(MSVC)
+    target_link_options(fatstd PRIVATE "/WHOLEARCHIVE:$<TARGET_FILE:${fatstd_raylib_target}>")
+  else()
+    target_link_options(fatstd PRIVATE "LINKER:--whole-archive,$<TARGET_FILE:${fatstd_raylib_target}>,--no-whole-archive")
   endif()
 endif()
 
