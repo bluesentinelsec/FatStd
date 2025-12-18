@@ -38,7 +38,9 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/fatstd_go.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/handles.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/string_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/bytes_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstrings/fatstrings.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/fatbytes.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.mod"
   VERBATIM
 )
@@ -70,6 +72,7 @@ target_sources(
     src/fat_string.c
     src/fat_string_builder.c
     src/fat_string_reader.c
+    src/fat_bytes.c
 )
 
 target_include_directories(

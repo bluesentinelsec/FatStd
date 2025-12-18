@@ -1,21 +1,19 @@
 Refer to the following documents for context on the project:
 1. docs/design.md
 2. docs/onboarding_and_testing_functions.md
+3. docs/documenting_code.md
 
-Let's continue working on the fat strings subsystem.
-I want to onboard these functions:
+Let's onboard more functions to fat_bytes:
 
-type Reader
-func NewReader(s string) *Reader
-func (r *Reader) Len() int
-func (r *Reader) Read(b []byte) (n int, err error)
-func (r *Reader) ReadAt(b []byte, off int64) (n int, err error)
-func (r *Reader) ReadByte() (byte, error)
-func (r *Reader) Reset(s string)
-func (r *Reader) Seek(offset int64, whence int) (int64, error)
-func (r *Reader) Size() int64
-func (r *Reader) UnreadByte() error
-func (r *Reader) WriteTo(w io.Writer) (n int64, err error)
+TrimPrefix(s, prefix []byte) []byte
+TrimSuffix(s, suffix []byte) []byte
+Cut(s, sep []byte) (before, after []byte, found bool)
+CutPrefix(s, prefix []byte) (after []byte, found bool) / CutSuffix
+Fields(s []byte) [][]byte
+Repeat(b []byte, count int) []byte
+IndexByte(b []byte, c byte) int
+IndexAny(s []byte, chars string) int
+ToValidUTF8(s, replacement []byte) []byte
 
-I expect the Go bindings, C bindings, and a unit test in Python.
+I expect the Go bindings, C bindings, and unit tests in Python.
 Warn me if any of the specified functions violate the design or are impractical for C.
