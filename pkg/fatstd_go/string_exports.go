@@ -2,10 +2,12 @@ package main
 
 /*
 #include <stdint.h>
+#include <stdbool.h>
 */
 import "C"
 
 import (
+	"io"
 	"unsafe"
 
 	"github.com/bluesentinelsec/FatStd/pkg/fatstrings"
@@ -19,6 +21,14 @@ func fatstdStringNewFromGoString(value string) uintptr {
 
 func fatstdStringArrayNew(values []string) uintptr {
 	return fatstdHandles.register(fatstrings.NewStringArray(values))
+}
+
+func fatstdStringBuilderNew() uintptr {
+	return fatstdHandles.register(fatstrings.NewBuilder())
+}
+
+func fatstdStringReaderNew(s string) uintptr {
+	return fatstdHandles.register(fatstrings.NewReader(s))
 }
 
 func fatstdStringFromHandle(handle uintptr) *fatstrings.String {
@@ -49,6 +59,36 @@ func fatstdStringArrayFromHandle(handle uintptr) *fatstrings.StringArray {
 		panic("fatstdStringArrayFromHandle: handle is not a fat string array")
 	}
 	return a
+}
+
+func fatstdStringBuilderFromHandle(handle uintptr) *fatstrings.Builder {
+	if handle == 0 {
+		panic("fatstdStringBuilderFromHandle: handle is 0")
+	}
+	value, ok := fatstdHandles.get(handle)
+	if !ok {
+		panic("fatstdStringBuilderFromHandle: invalid handle")
+	}
+	b, ok := value.(*fatstrings.Builder)
+	if !ok {
+		panic("fatstdStringBuilderFromHandle: handle is not a fat string builder")
+	}
+	return b
+}
+
+func fatstdStringReaderFromHandle(handle uintptr) *fatstrings.Reader {
+	if handle == 0 {
+		panic("fatstdStringReaderFromHandle: handle is 0")
+	}
+	value, ok := fatstdHandles.get(handle)
+	if !ok {
+		panic("fatstdStringReaderFromHandle: invalid handle")
+	}
+	r, ok := value.(*fatstrings.Reader)
+	if !ok {
+		panic("fatstdStringReaderFromHandle: handle is not a fat string reader")
+	}
+	return r
 }
 
 //export fatstd_go_string_new_utf8_cstr
@@ -334,6 +374,242 @@ func fatstd_go_string_to_valid_utf8(sHandle C.uintptr_t, replacementHandle C.uin
 	s := fatstdStringFromHandle(uintptr(sHandle))
 	replacement := fatstdStringFromHandle(uintptr(replacementHandle))
 	return C.uintptr_t(fatstdStringNewFromGoString(fatstrings.ToValidUTF8(s.Value(), replacement.Value())))
+}
+
+//export fatstd_go_string_builder_new
+func fatstd_go_string_builder_new() C.uintptr_t {
+	return C.uintptr_t(fatstdStringBuilderNew())
+}
+
+//export fatstd_go_string_builder_cap
+func fatstd_go_string_builder_cap(handle C.uintptr_t) C.size_t {
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	return C.size_t(b.Cap())
+}
+
+//export fatstd_go_string_builder_grow
+func fatstd_go_string_builder_grow(handle C.uintptr_t, n C.size_t) {
+	if n > C.size_t(2147483647) {
+		panic("fatstd_go_string_builder_grow: n too large")
+	}
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	b.Grow(int(n))
+}
+
+//export fatstd_go_string_builder_len
+func fatstd_go_string_builder_len(handle C.uintptr_t) C.size_t {
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	return C.size_t(b.Len())
+}
+
+//export fatstd_go_string_builder_reset
+func fatstd_go_string_builder_reset(handle C.uintptr_t) {
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	b.Reset()
+}
+
+//export fatstd_go_string_builder_string
+func fatstd_go_string_builder_string(handle C.uintptr_t) C.uintptr_t {
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	return C.uintptr_t(fatstdStringNewFromGoString(b.String()))
+}
+
+//export fatstd_go_string_builder_write
+func fatstd_go_string_builder_write(handle C.uintptr_t, bytes *C.char, len C.size_t) C.size_t {
+	if bytes == nil {
+		if len == 0 {
+			return 0
+		}
+		panic("fatstd_go_string_builder_write: bytes is NULL but len > 0")
+	}
+	if len > C.size_t(2147483647) {
+		panic("fatstd_go_string_builder_write: len too large")
+	}
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	buf := C.GoBytes(unsafe.Pointer(bytes), C.int(len))
+	return C.size_t(b.Write(buf))
+}
+
+//export fatstd_go_string_builder_write_byte
+func fatstd_go_string_builder_write_byte(handle C.uintptr_t, c C.uchar) {
+	b := fatstdStringBuilderFromHandle(uintptr(handle))
+	b.WriteByte(byte(c))
+}
+
+//export fatstd_go_string_builder_write_string
+func fatstd_go_string_builder_write_string(builderHandle C.uintptr_t, sHandle C.uintptr_t) C.size_t {
+	b := fatstdStringBuilderFromHandle(uintptr(builderHandle))
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	return C.size_t(b.WriteString(s.Value()))
+}
+
+//export fatstd_go_string_builder_free
+func fatstd_go_string_builder_free(handle C.uintptr_t) {
+	if handle == 0 {
+		panic("fatstd_go_string_builder_free: handle is 0")
+	}
+
+	value, ok := fatstdHandles.take(uintptr(handle))
+	if !ok {
+		panic("fatstd_go_string_builder_free: invalid handle")
+	}
+	if _, ok := value.(*fatstrings.Builder); !ok {
+		panic("fatstd_go_string_builder_free: handle is not a fat string builder")
+	}
+}
+
+//export fatstd_go_string_reader_new
+func fatstd_go_string_reader_new(sHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	return C.uintptr_t(fatstdStringReaderNew(s.Value()))
+}
+
+//export fatstd_go_string_reader_len
+func fatstd_go_string_reader_len(handle C.uintptr_t) C.size_t {
+	r := fatstdStringReaderFromHandle(uintptr(handle))
+	return C.size_t(r.Len())
+}
+
+//export fatstd_go_string_reader_size
+func fatstd_go_string_reader_size(handle C.uintptr_t) C.longlong {
+	r := fatstdStringReaderFromHandle(uintptr(handle))
+	return C.longlong(r.Size())
+}
+
+//export fatstd_go_string_reader_reset
+func fatstd_go_string_reader_reset(readerHandle C.uintptr_t, sHandle C.uintptr_t) {
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	s := fatstdStringFromHandle(uintptr(sHandle))
+	r.Reset(s.Value())
+}
+
+//export fatstd_go_string_reader_read
+func fatstd_go_string_reader_read(readerHandle C.uintptr_t, bytes *C.char, len C.size_t, eofOut *C.bool) C.size_t {
+	if eofOut == nil {
+		panic("fatstd_go_string_reader_read: eofOut is NULL")
+	}
+	if bytes == nil {
+		if len == 0 {
+			*eofOut = false
+			return 0
+		}
+		panic("fatstd_go_string_reader_read: bytes is NULL but len > 0")
+	}
+	if len > C.size_t(2147483647) {
+		panic("fatstd_go_string_reader_read: len too large")
+	}
+
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(bytes)), int(len))
+
+	n, err := r.Read(dst)
+	if err == io.EOF {
+		*eofOut = true
+		return C.size_t(n)
+	}
+	if err != nil {
+		panic("fatstd_go_string_reader_read: unexpected error")
+	}
+	*eofOut = false
+	return C.size_t(n)
+}
+
+//export fatstd_go_string_reader_read_at
+func fatstd_go_string_reader_read_at(readerHandle C.uintptr_t, bytes *C.char, len C.size_t, off C.longlong, eofOut *C.bool) C.size_t {
+	if eofOut == nil {
+		panic("fatstd_go_string_reader_read_at: eofOut is NULL")
+	}
+	if bytes == nil {
+		if len == 0 {
+			*eofOut = false
+			return 0
+		}
+		panic("fatstd_go_string_reader_read_at: bytes is NULL but len > 0")
+	}
+	if len > C.size_t(2147483647) {
+		panic("fatstd_go_string_reader_read_at: len too large")
+	}
+
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	dst := unsafe.Slice((*byte)(unsafe.Pointer(bytes)), int(len))
+
+	n, err := r.ReadAt(dst, int64(off))
+	if err == io.EOF {
+		*eofOut = true
+		return C.size_t(n)
+	}
+	if err != nil {
+		panic("fatstd_go_string_reader_read_at: unexpected error")
+	}
+	*eofOut = false
+	return C.size_t(n)
+}
+
+//export fatstd_go_string_reader_read_byte
+func fatstd_go_string_reader_read_byte(readerHandle C.uintptr_t, byteOut *C.uchar, eofOut *C.bool) C.bool {
+	if byteOut == nil {
+		panic("fatstd_go_string_reader_read_byte: byteOut is NULL")
+	}
+	if eofOut == nil {
+		panic("fatstd_go_string_reader_read_byte: eofOut is NULL")
+	}
+
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	b, err := r.ReadByte()
+	if err == io.EOF {
+		*eofOut = true
+		return false
+	}
+	if err != nil {
+		panic("fatstd_go_string_reader_read_byte: unexpected error")
+	}
+	*byteOut = C.uchar(b)
+	*eofOut = false
+	return true
+}
+
+//export fatstd_go_string_reader_unread_byte
+func fatstd_go_string_reader_unread_byte(readerHandle C.uintptr_t) {
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	if err := r.UnreadByte(); err != nil {
+		panic("fatstd_go_string_reader_unread_byte: invalid unread")
+	}
+}
+
+//export fatstd_go_string_reader_seek
+func fatstd_go_string_reader_seek(readerHandle C.uintptr_t, offset C.longlong, whence C.int) C.longlong {
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	pos, err := r.Seek(int64(offset), int(whence))
+	if err != nil {
+		panic("fatstd_go_string_reader_seek: invalid seek")
+	}
+	return C.longlong(pos)
+}
+
+//export fatstd_go_string_reader_write_to_builder
+func fatstd_go_string_reader_write_to_builder(readerHandle C.uintptr_t, builderHandle C.uintptr_t) C.longlong {
+	r := fatstdStringReaderFromHandle(uintptr(readerHandle))
+	b := fatstdStringBuilderFromHandle(uintptr(builderHandle))
+	n, err := r.WriteTo(b.Underlying())
+	if err != nil {
+		panic("fatstd_go_string_reader_write_to_builder: unexpected error")
+	}
+	return C.longlong(n)
+}
+
+//export fatstd_go_string_reader_free
+func fatstd_go_string_reader_free(handle C.uintptr_t) {
+	if handle == 0 {
+		panic("fatstd_go_string_reader_free: handle is 0")
+	}
+
+	value, ok := fatstdHandles.take(uintptr(handle))
+	if !ok {
+		panic("fatstd_go_string_reader_free: invalid handle")
+	}
+	if _, ok := value.(*fatstrings.Reader); !ok {
+		panic("fatstd_go_string_reader_free: handle is not a fat string reader")
+	}
 }
 
 //export fatstd_go_string_array_free

@@ -62,7 +62,15 @@ endif()
 
 add_library(fatstd::fatstd ALIAS fatstd)
 
-target_sources(fatstd PRIVATE src/fat_version.c src/fat_go.c src/fat_string.c)
+target_sources(
+  fatstd
+  PRIVATE
+    src/fat_version.c
+    src/fat_go.c
+    src/fat_string.c
+    src/fat_string_builder.c
+    src/fat_string_reader.c
+)
 
 target_include_directories(
   fatstd

@@ -1,6 +1,9 @@
 package fatstrings
 
-import "strings"
+import (
+	"io"
+	"strings"
+)
 
 type String struct {
 	value string
@@ -10,12 +13,28 @@ type StringArray struct {
 	values []string
 }
 
+type Builder struct {
+	builder strings.Builder
+}
+
+type Reader struct {
+	reader strings.Reader
+}
+
 func NewUTF8(value string) *String {
 	return &String{value: value}
 }
 
 func NewStringArray(values []string) *StringArray {
 	return &StringArray{values: values}
+}
+
+func NewBuilder() *Builder {
+	return &Builder{}
+}
+
+func NewReader(s string) *Reader {
+	return &Reader{reader: *strings.NewReader(s)}
 }
 
 func (s *String) Value() string {
@@ -47,6 +66,134 @@ func (a *StringArray) Values() []string {
 		panic("fatstrings.StringArray.Values: receiver is nil")
 	}
 	return a.values
+}
+
+func (b *Builder) Cap() int {
+	if b == nil {
+		panic("fatstrings.Builder.Cap: receiver is nil")
+	}
+	return b.builder.Cap()
+}
+
+func (b *Builder) Grow(n int) {
+	if b == nil {
+		panic("fatstrings.Builder.Grow: receiver is nil")
+	}
+	b.builder.Grow(n)
+}
+
+func (b *Builder) Len() int {
+	if b == nil {
+		panic("fatstrings.Builder.Len: receiver is nil")
+	}
+	return b.builder.Len()
+}
+
+func (b *Builder) Reset() {
+	if b == nil {
+		panic("fatstrings.Builder.Reset: receiver is nil")
+	}
+	b.builder.Reset()
+}
+
+func (b *Builder) String() string {
+	if b == nil {
+		panic("fatstrings.Builder.String: receiver is nil")
+	}
+	return b.builder.String()
+}
+
+func (b *Builder) Write(p []byte) int {
+	if b == nil {
+		panic("fatstrings.Builder.Write: receiver is nil")
+	}
+	n, _ := b.builder.Write(p)
+	return n
+}
+
+func (b *Builder) WriteByte(c byte) {
+	if b == nil {
+		panic("fatstrings.Builder.WriteByte: receiver is nil")
+	}
+	_ = b.builder.WriteByte(c)
+}
+
+func (b *Builder) WriteString(s string) int {
+	if b == nil {
+		panic("fatstrings.Builder.WriteString: receiver is nil")
+	}
+	n, _ := b.builder.WriteString(s)
+	return n
+}
+
+func (b *Builder) Underlying() *strings.Builder {
+	if b == nil {
+		panic("fatstrings.Builder.Underlying: receiver is nil")
+	}
+	return &b.builder
+}
+
+func (r *Reader) Len() int {
+	if r == nil {
+		panic("fatstrings.Reader.Len: receiver is nil")
+	}
+	return r.reader.Len()
+}
+
+func (r *Reader) Read(p []byte) (int, error) {
+	if r == nil {
+		panic("fatstrings.Reader.Read: receiver is nil")
+	}
+	return r.reader.Read(p)
+}
+
+func (r *Reader) ReadAt(p []byte, off int64) (int, error) {
+	if r == nil {
+		panic("fatstrings.Reader.ReadAt: receiver is nil")
+	}
+	return r.reader.ReadAt(p, off)
+}
+
+func (r *Reader) ReadByte() (byte, error) {
+	if r == nil {
+		panic("fatstrings.Reader.ReadByte: receiver is nil")
+	}
+	return r.reader.ReadByte()
+}
+
+func (r *Reader) Reset(s string) {
+	if r == nil {
+		panic("fatstrings.Reader.Reset: receiver is nil")
+	}
+	r.reader.Reset(s)
+}
+
+func (r *Reader) Seek(offset int64, whence int) (int64, error) {
+	if r == nil {
+		panic("fatstrings.Reader.Seek: receiver is nil")
+	}
+	return r.reader.Seek(offset, whence)
+}
+
+func (r *Reader) Size() int64 {
+	if r == nil {
+		panic("fatstrings.Reader.Size: receiver is nil")
+	}
+	return r.reader.Size()
+}
+
+func (r *Reader) UnreadByte() error {
+	if r == nil {
+		panic("fatstrings.Reader.UnreadByte: receiver is nil")
+	}
+	return r.reader.UnreadByte()
+}
+
+func (r *Reader) WriteTo(w io.Writer) (int64, error) {
+	if r == nil {
+		panic("fatstrings.Reader.WriteTo: receiver is nil")
+	}
+	return r.reader.WriteTo(w)
 }
 
 func Clone(s string) string {

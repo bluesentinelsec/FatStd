@@ -69,4 +69,4 @@ static:
 	@$(MAKE) build SHARED=0
 
 test: shared
-	$(PYTHON) scripts/python_tests/test_fatstd_shared.py --verbose
+	$(PYTHON) scripts/python_tests/test_fatstd_shared.py
