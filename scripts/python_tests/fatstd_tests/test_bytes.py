@@ -38,8 +38,35 @@ class TestBytes(unittest.TestCase):
         cls.fat_BytesTrim = bind(
             "fat_BytesTrim", argtypes=[fat_bytes, fat_string], restype=fat_bytes
         )
+        cls.fat_BytesTrimPrefix = bind(
+            "fat_BytesTrimPrefix", argtypes=[fat_bytes, fat_bytes], restype=fat_bytes
+        )
+        cls.fat_BytesTrimSuffix = bind(
+            "fat_BytesTrimSuffix", argtypes=[fat_bytes, fat_bytes], restype=fat_bytes
+        )
         cls.fat_BytesSplit = bind(
             "fat_BytesSplit", argtypes=[fat_bytes, fat_bytes], restype=fat_bytes_array
+        )
+        cls.fat_BytesFields = bind("fat_BytesFields", argtypes=[fat_bytes], restype=fat_bytes_array)
+        cls.fat_BytesCut = bind(
+            "fat_BytesCut",
+            argtypes=[
+                fat_bytes,
+                fat_bytes,
+                ctypes.POINTER(fat_bytes),
+                ctypes.POINTER(fat_bytes),
+            ],
+            restype=ctypes.c_bool,
+        )
+        cls.fat_BytesCutPrefix = bind(
+            "fat_BytesCutPrefix",
+            argtypes=[fat_bytes, fat_bytes, ctypes.POINTER(fat_bytes)],
+            restype=ctypes.c_bool,
+        )
+        cls.fat_BytesCutSuffix = bind(
+            "fat_BytesCutSuffix",
+            argtypes=[fat_bytes, fat_bytes, ctypes.POINTER(fat_bytes)],
+            restype=ctypes.c_bool,
         )
         cls.fat_BytesArrayLen = bind(
             "fat_BytesArrayLen", argtypes=[fat_bytes_array], restype=ctypes.c_size_t
@@ -61,8 +88,20 @@ class TestBytes(unittest.TestCase):
             argtypes=[fat_bytes, fat_bytes, fat_bytes, ctypes.c_int],
             restype=fat_bytes,
         )
+        cls.fat_BytesRepeat = bind(
+            "fat_BytesRepeat", argtypes=[fat_bytes, ctypes.c_int], restype=fat_bytes
+        )
         cls.fat_BytesToLower = bind("fat_BytesToLower", argtypes=[fat_bytes], restype=fat_bytes)
         cls.fat_BytesToUpper = bind("fat_BytesToUpper", argtypes=[fat_bytes], restype=fat_bytes)
+        cls.fat_BytesIndexByte = bind(
+            "fat_BytesIndexByte", argtypes=[fat_bytes, ctypes.c_uint8], restype=ctypes.c_int
+        )
+        cls.fat_BytesIndexAny = bind(
+            "fat_BytesIndexAny", argtypes=[fat_bytes, fat_string], restype=ctypes.c_int
+        )
+        cls.fat_BytesToValidUTF8 = bind(
+            "fat_BytesToValidUTF8", argtypes=[fat_bytes, fat_bytes], restype=fat_bytes
+        )
         cls.fat_BytesIndex = bind(
             "fat_BytesIndex", argtypes=[fat_bytes, fat_bytes], restype=ctypes.c_int
         )
@@ -85,6 +124,12 @@ class TestBytes(unittest.TestCase):
 
     def _bytes_to_py(self, h: int) -> bytes:
         n = self.fat_BytesLen(h)
+        if n == 0:
+            dst = ctypes.create_string_buffer(1, 1)
+            copied = self.fat_BytesCopyOut(h, ctypes.addressof(dst), 0)
+            self.assertEqual(0, copied)
+            return b""
+
         dst = ctypes.create_string_buffer(n, n)
         copied = self.fat_BytesCopyOut(h, ctypes.addressof(dst), len(dst.raw))
         self.assertEqual(n, copied)
@@ -183,4 +228,79 @@ class TestBytes(unittest.TestCase):
         self.fat_BytesFree(e0)
         self.fat_BytesArrayFree(arr)
         self.fat_BytesFree(sep)
+        self.fat_BytesFree(s)
+
+    def test_trim_prefix_suffix_cut_fields_repeat_index_any_utf8(self) -> None:
+        s = self._bytes_new(b"foobar")
+        prefix = self._bytes_new(b"foo")
+        suffix = self._bytes_new(b"bar")
+
+        tp = self.fat_BytesTrimPrefix(s, prefix)
+        ts = self.fat_BytesTrimSuffix(s, suffix)
+        self.assertEqual(b"bar", self._bytes_to_py(tp))
+        self.assertEqual(b"foo", self._bytes_to_py(ts))
+
+        self.fat_BytesFree(ts)
+        self.fat_BytesFree(tp)
+
+        before_out = fat_string_handle_type()()
+        after_out = fat_string_handle_type()()
+        sep = self._bytes_new(b"o")
+        found = self.fat_BytesCut(s, sep, ctypes.byref(before_out), ctypes.byref(after_out))
+        self.assertTrue(found)
+        self.assertEqual(b"f", self._bytes_to_py(before_out.value))
+        self.assertEqual(b"obar", self._bytes_to_py(after_out.value))
+        self.fat_BytesFree(after_out.value)
+        self.fat_BytesFree(before_out.value)
+        self.fat_BytesFree(sep)
+
+        after_prefix_out = fat_string_handle_type()()
+        found_prefix = self.fat_BytesCutPrefix(s, prefix, ctypes.byref(after_prefix_out))
+        self.assertTrue(found_prefix)
+        self.assertEqual(b"bar", self._bytes_to_py(after_prefix_out.value))
+        self.fat_BytesFree(after_prefix_out.value)
+
+        after_suffix_out = fat_string_handle_type()()
+        found_suffix = self.fat_BytesCutSuffix(s, suffix, ctypes.byref(after_suffix_out))
+        self.assertTrue(found_suffix)
+        self.assertEqual(b"foo", self._bytes_to_py(after_suffix_out.value))
+        self.fat_BytesFree(after_suffix_out.value)
+
+        ws = self._bytes_new(b"  a\tb\nc  ")
+        fields = self.fat_BytesFields(ws)
+        self.assertEqual(3, self.fat_BytesArrayLen(fields))
+        f0 = self.fat_BytesArrayGet(fields, 0)
+        f1 = self.fat_BytesArrayGet(fields, 1)
+        f2 = self.fat_BytesArrayGet(fields, 2)
+        self.assertEqual(b"a", self._bytes_to_py(f0))
+        self.assertEqual(b"b", self._bytes_to_py(f1))
+        self.assertEqual(b"c", self._bytes_to_py(f2))
+        self.fat_BytesFree(f2)
+        self.fat_BytesFree(f1)
+        self.fat_BytesFree(f0)
+        self.fat_BytesArrayFree(fields)
+        self.fat_BytesFree(ws)
+
+        rep = self.fat_BytesRepeat(prefix, 3)
+        self.assertEqual(b"foofoofoo", self._bytes_to_py(rep))
+        self.fat_BytesFree(rep)
+
+        self.assertEqual(1, self.fat_BytesIndexByte(s, ord(b"o")))
+        self.assertEqual(-1, self.fat_BytesIndexByte(s, ord(b"z")))
+
+        chars = self.fat_StringNewUTF8(b"xyzb")
+        self.assertNotEqual(0, chars)
+        self.assertEqual(3, self.fat_BytesIndexAny(s, chars))
+        self.fat_StringFree(chars)
+
+        invalid = self._bytes_new(b"\xffa")
+        repl = self._bytes_new(b"?")
+        valid = self.fat_BytesToValidUTF8(invalid, repl)
+        self.assertEqual(b"?a", self._bytes_to_py(valid))
+        self.fat_BytesFree(valid)
+        self.fat_BytesFree(repl)
+        self.fat_BytesFree(invalid)
+
+        self.fat_BytesFree(suffix)
+        self.fat_BytesFree(prefix)
         self.fat_BytesFree(s)

@@ -38,8 +38,32 @@ fat_Bytes fat_BytesTrim(fat_Bytes s, fat_String cutset) {
   return (fat_Bytes)fatstd_go_bytes_trim((uintptr_t)s, (uintptr_t)cutset);
 }
 
+fat_Bytes fat_BytesTrimPrefix(fat_Bytes s, fat_Bytes prefix) {
+  return (fat_Bytes)fatstd_go_bytes_trim_prefix((uintptr_t)s, (uintptr_t)prefix);
+}
+
+fat_Bytes fat_BytesTrimSuffix(fat_Bytes s, fat_Bytes suffix) {
+  return (fat_Bytes)fatstd_go_bytes_trim_suffix((uintptr_t)s, (uintptr_t)suffix);
+}
+
+bool fat_BytesCut(fat_Bytes s, fat_Bytes sep, fat_Bytes *before_out, fat_Bytes *after_out) {
+  return (bool)fatstd_go_bytes_cut((uintptr_t)s, (uintptr_t)sep, (uintptr_t *)before_out, (uintptr_t *)after_out);
+}
+
+bool fat_BytesCutPrefix(fat_Bytes s, fat_Bytes prefix, fat_Bytes *after_out) {
+  return (bool)fatstd_go_bytes_cut_prefix((uintptr_t)s, (uintptr_t)prefix, (uintptr_t *)after_out);
+}
+
+bool fat_BytesCutSuffix(fat_Bytes s, fat_Bytes suffix, fat_Bytes *after_out) {
+  return (bool)fatstd_go_bytes_cut_suffix((uintptr_t)s, (uintptr_t)suffix, (uintptr_t *)after_out);
+}
+
 fat_BytesArray fat_BytesSplit(fat_Bytes s, fat_Bytes sep) {
   return (fat_BytesArray)fatstd_go_bytes_split((uintptr_t)s, (uintptr_t)sep);
+}
+
+fat_BytesArray fat_BytesFields(fat_Bytes s) {
+  return (fat_BytesArray)fatstd_go_bytes_fields((uintptr_t)s);
 }
 
 size_t fat_BytesArrayLen(fat_BytesArray a) {
@@ -66,12 +90,28 @@ fat_Bytes fat_BytesReplace(fat_Bytes s, fat_Bytes old_value, fat_Bytes new_value
   return (fat_Bytes)fatstd_go_bytes_replace((uintptr_t)s, (uintptr_t)old_value, (uintptr_t)new_value, n);
 }
 
+fat_Bytes fat_BytesRepeat(fat_Bytes b, int count) {
+  return (fat_Bytes)fatstd_go_bytes_repeat((uintptr_t)b, count);
+}
+
 fat_Bytes fat_BytesToLower(fat_Bytes s) {
   return (fat_Bytes)fatstd_go_bytes_to_lower((uintptr_t)s);
 }
 
 fat_Bytes fat_BytesToUpper(fat_Bytes s) {
   return (fat_Bytes)fatstd_go_bytes_to_upper((uintptr_t)s);
+}
+
+int fat_BytesIndexByte(fat_Bytes b, uint8_t c) {
+  return (int)fatstd_go_bytes_index_byte((uintptr_t)b, c);
+}
+
+int fat_BytesIndexAny(fat_Bytes s, fat_String chars) {
+  return (int)fatstd_go_bytes_index_any((uintptr_t)s, (uintptr_t)chars);
+}
+
+fat_Bytes fat_BytesToValidUTF8(fat_Bytes s, fat_Bytes replacement) {
+  return (fat_Bytes)fatstd_go_bytes_to_valid_utf8((uintptr_t)s, (uintptr_t)replacement);
 }
 
 int fat_BytesIndex(fat_Bytes s, fat_Bytes sep) {
@@ -93,4 +133,3 @@ bool fat_BytesEqual(fat_Bytes a, fat_Bytes b) {
 void fat_BytesFree(fat_Bytes b) {
   fatstd_go_bytes_free((uintptr_t)b);
 }
-

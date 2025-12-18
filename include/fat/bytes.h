@@ -12,6 +12,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include "fat/export.h"
 #include "fat/handle.h"
@@ -131,6 +132,24 @@ FATSTD_API fat_Bytes fat_BytesTrimSpace(fat_Bytes s);
 FATSTD_API fat_Bytes fat_BytesTrim(fat_Bytes s, fat_String cutset);
 
 /**
+ * @brief Returns a new byte slice with the leading `prefix` removed, if present.
+ *
+ * @param s Bytes handle.
+ * @param prefix Prefix bytes handle.
+ * @return A new fat_Bytes handle (must be freed with fat_BytesFree).
+ */
+FATSTD_API fat_Bytes fat_BytesTrimPrefix(fat_Bytes s, fat_Bytes prefix);
+
+/**
+ * @brief Returns a new byte slice with the trailing `suffix` removed, if present.
+ *
+ * @param s Bytes handle.
+ * @param suffix Suffix bytes handle.
+ * @return A new fat_Bytes handle (must be freed with fat_BytesFree).
+ */
+FATSTD_API fat_Bytes fat_BytesTrimSuffix(fat_Bytes s, fat_Bytes suffix);
+
+/**
  * @brief Splits `s` around each instance of `sep`.
  *
  * @param s Bytes handle.
@@ -138,6 +157,62 @@ FATSTD_API fat_Bytes fat_BytesTrim(fat_Bytes s, fat_String cutset);
  * @return A new fat_BytesArray handle (must be freed with fat_BytesArrayFree).
  */
 FATSTD_API fat_BytesArray fat_BytesSplit(fat_Bytes s, fat_Bytes sep);
+
+/**
+ * @brief Splits `s` around runs of ASCII whitespace.
+ *
+ * Matches Go's bytes.Fields.
+ *
+ * @param s Bytes handle.
+ * @return A new fat_BytesArray handle (must be freed with fat_BytesArrayFree).
+ */
+FATSTD_API fat_BytesArray fat_BytesFields(fat_Bytes s);
+
+/**
+ * @brief Splits `s` around the first instance of `sep`.
+ *
+ * Matches Go's bytes.Cut semantics. Outputs are newly allocated fat_Bytes handles
+ * regardless of whether `sep` is found.
+ *
+ * @param s Bytes handle.
+ * @param sep Separator bytes handle.
+ * @param before_out Output: bytes before `sep` (new handle; caller frees).
+ * @param after_out Output: bytes after `sep` (new handle; caller frees).
+ * @return True if `sep` was found; false otherwise.
+ *
+ * @note `before_out` and `after_out` must be non-NULL.
+ */
+FATSTD_API bool fat_BytesCut(fat_Bytes s, fat_Bytes sep, fat_Bytes *before_out, fat_Bytes *after_out);
+
+/**
+ * @brief Cuts `prefix` from the start of `s`.
+ *
+ * Matches Go's bytes.CutPrefix semantics. `after_out` is a newly allocated fat_Bytes handle
+ * regardless of whether `prefix` is found.
+ *
+ * @param s Bytes handle.
+ * @param prefix Prefix bytes handle.
+ * @param after_out Output: bytes after `prefix` (new handle; caller frees).
+ * @return True if `prefix` was found; false otherwise.
+ *
+ * @note `after_out` must be non-NULL.
+ */
+FATSTD_API bool fat_BytesCutPrefix(fat_Bytes s, fat_Bytes prefix, fat_Bytes *after_out);
+
+/**
+ * @brief Cuts `suffix` from the end of `s`.
+ *
+ * Matches Go's bytes.CutSuffix semantics. `after_out` is a newly allocated fat_Bytes handle
+ * regardless of whether `suffix` is found.
+ *
+ * @param s Bytes handle.
+ * @param suffix Suffix bytes handle.
+ * @param after_out Output: bytes with trailing suffix removed (new handle; caller frees).
+ * @return True if `suffix` was found; false otherwise.
+ *
+ * @note `after_out` must be non-NULL.
+ */
+FATSTD_API bool fat_BytesCutSuffix(fat_Bytes s, fat_Bytes suffix, fat_Bytes *after_out);
 
 /**
  * @brief Returns the number of elements in a bytes array.
@@ -200,6 +275,15 @@ FATSTD_API fat_Bytes fat_BytesReplaceAll(fat_Bytes s, fat_Bytes old_value, fat_B
 FATSTD_API fat_Bytes fat_BytesReplace(fat_Bytes s, fat_Bytes old_value, fat_Bytes new_value, int n);
 
 /**
+ * @brief Returns a new byte slice consisting of `count` copies of `b` concatenated.
+ *
+ * @param b Bytes handle.
+ * @param count Number of repetitions (must be >= 0; misuse is fatal).
+ * @return A new fat_Bytes handle (must be freed with fat_BytesFree).
+ */
+FATSTD_API fat_Bytes fat_BytesRepeat(fat_Bytes b, int count);
+
+/**
  * @brief Returns a new byte slice with ASCII letters mapped to their lower case.
  *
  * Matches Go's bytes.ToLower (ASCII-only).
@@ -218,6 +302,38 @@ FATSTD_API fat_Bytes fat_BytesToLower(fat_Bytes s);
  * @return A new fat_Bytes handle (must be freed with fat_BytesFree).
  */
 FATSTD_API fat_Bytes fat_BytesToUpper(fat_Bytes s);
+
+/**
+ * @brief Returns the index of the first instance of byte `c` in `b`.
+ *
+ * @param b Bytes handle.
+ * @param c Byte to search for.
+ * @return Zero-based index, or -1 if not found.
+ */
+FATSTD_API int fat_BytesIndexByte(fat_Bytes b, uint8_t c);
+
+/**
+ * @brief Returns the index of the first occurrence in `s` of any byte in `chars`.
+ *
+ * This maps to Go's bytes.IndexAny, which takes a Go string. In C, `chars` is
+ * provided as a fat_String handle.
+ *
+ * @param s Bytes handle.
+ * @param chars String handle containing the set of bytes to search for.
+ * @return Zero-based index, or -1 if not found.
+ */
+FATSTD_API int fat_BytesIndexAny(fat_Bytes s, fat_String chars);
+
+/**
+ * @brief Returns a copy of `s` with invalid UTF-8 sequences replaced.
+ *
+ * Matches Go's bytes.ToValidUTF8.
+ *
+ * @param s Bytes handle interpreted as UTF-8 bytes.
+ * @param replacement Replacement bytes.
+ * @return A new fat_Bytes handle (must be freed with fat_BytesFree).
+ */
+FATSTD_API fat_Bytes fat_BytesToValidUTF8(fat_Bytes s, fat_Bytes replacement);
 
 /**
  * @brief Returns the index of the first instance of `sep` in `s`.
@@ -267,4 +383,3 @@ FATSTD_API void fat_BytesFree(fat_Bytes b);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-

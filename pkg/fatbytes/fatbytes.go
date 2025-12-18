@@ -73,8 +73,32 @@ func Trim(s []byte, cutset string) []byte {
 	return bytes.Trim(s, cutset)
 }
 
+func TrimPrefix(s, prefix []byte) []byte {
+	return bytes.TrimPrefix(s, prefix)
+}
+
+func TrimSuffix(s, suffix []byte) []byte {
+	return bytes.TrimSuffix(s, suffix)
+}
+
+func Cut(s, sep []byte) (before, after []byte, found bool) {
+	return bytes.Cut(s, sep)
+}
+
+func CutPrefix(s, prefix []byte) (after []byte, found bool) {
+	return bytes.CutPrefix(s, prefix)
+}
+
+func CutSuffix(s, suffix []byte) (after []byte, found bool) {
+	return bytes.CutSuffix(s, suffix)
+}
+
 func Split(s, sep []byte) [][]byte {
 	return bytes.Split(s, sep)
+}
+
+func Fields(s []byte) [][]byte {
+	return bytes.Fields(s)
 }
 
 func Join(s [][]byte, sep []byte) []byte {
@@ -89,12 +113,28 @@ func Replace(s, old, newValue []byte, n int) []byte {
 	return bytes.Replace(s, old, newValue, n)
 }
 
+func Repeat(b []byte, count int) []byte {
+	return bytes.Repeat(b, count)
+}
+
 func ToLower(s []byte) []byte {
 	return bytes.ToLower(s)
 }
 
 func ToUpper(s []byte) []byte {
 	return bytes.ToUpper(s)
+}
+
+func IndexByte(b []byte, c byte) int {
+	return bytes.IndexByte(b, c)
+}
+
+func IndexAny(s []byte, chars string) int {
+	return bytes.IndexAny(s, chars)
+}
+
+func ToValidUTF8(s, replacement []byte) []byte {
+	return bytes.ToValidUTF8(s, replacement)
 }
 
 func Index(s, sep []byte) int {
@@ -112,4 +152,3 @@ func Compare(a, b []byte) int {
 func Equal(a, b []byte) bool {
 	return bytes.Equal(a, b)
 }
-

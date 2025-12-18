@@ -2,6 +2,7 @@ package main
 
 /*
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 */
 import "C"
@@ -142,11 +143,87 @@ func fatstd_go_bytes_trim(sHandle C.uintptr_t, cutsetHandle C.uintptr_t) C.uintp
 	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.Trim(s.Value(), cutset.Value())))
 }
 
+//export fatstd_go_bytes_trim_prefix
+func fatstd_go_bytes_trim_prefix(sHandle C.uintptr_t, prefixHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	prefix := fatstdBytesFromHandle(uintptr(prefixHandle))
+	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.TrimPrefix(s.Value(), prefix.Value())))
+}
+
+//export fatstd_go_bytes_trim_suffix
+func fatstd_go_bytes_trim_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	suffix := fatstdBytesFromHandle(uintptr(suffixHandle))
+	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.TrimSuffix(s.Value(), suffix.Value())))
+}
+
+//export fatstd_go_bytes_cut
+func fatstd_go_bytes_cut(sHandle C.uintptr_t, sepHandle C.uintptr_t, beforeOut *C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if beforeOut == nil {
+		panic("fatstd_go_bytes_cut: beforeOut is NULL")
+	}
+	if afterOut == nil {
+		panic("fatstd_go_bytes_cut: afterOut is NULL")
+	}
+
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	sep := fatstdBytesFromHandle(uintptr(sepHandle))
+	before, after, found := fatbytes.Cut(s.Value(), sep.Value())
+
+	*beforeOut = C.uintptr_t(fatstdBytesNewFromGoBytes(before))
+	*afterOut = C.uintptr_t(fatstdBytesNewFromGoBytes(after))
+
+	if found {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_bytes_cut_prefix
+func fatstd_go_bytes_cut_prefix(sHandle C.uintptr_t, prefixHandle C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if afterOut == nil {
+		panic("fatstd_go_bytes_cut_prefix: afterOut is NULL")
+	}
+
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	prefix := fatstdBytesFromHandle(uintptr(prefixHandle))
+	after, found := fatbytes.CutPrefix(s.Value(), prefix.Value())
+
+	*afterOut = C.uintptr_t(fatstdBytesNewFromGoBytes(after))
+	if found {
+		return 1
+	}
+	return 0
+}
+
+//export fatstd_go_bytes_cut_suffix
+func fatstd_go_bytes_cut_suffix(sHandle C.uintptr_t, suffixHandle C.uintptr_t, afterOut *C.uintptr_t) C.int {
+	if afterOut == nil {
+		panic("fatstd_go_bytes_cut_suffix: afterOut is NULL")
+	}
+
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	suffix := fatstdBytesFromHandle(uintptr(suffixHandle))
+	after, found := fatbytes.CutSuffix(s.Value(), suffix.Value())
+
+	*afterOut = C.uintptr_t(fatstdBytesNewFromGoBytes(after))
+	if found {
+		return 1
+	}
+	return 0
+}
+
 //export fatstd_go_bytes_split
 func fatstd_go_bytes_split(sHandle C.uintptr_t, sepHandle C.uintptr_t) C.uintptr_t {
 	s := fatstdBytesFromHandle(uintptr(sHandle))
 	sep := fatstdBytesFromHandle(uintptr(sepHandle))
 	return C.uintptr_t(fatstdBytesArrayNew(fatbytes.Split(s.Value(), sep.Value())))
+}
+
+//export fatstd_go_bytes_fields
+func fatstd_go_bytes_fields(sHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	return C.uintptr_t(fatstdBytesArrayNew(fatbytes.Fields(s.Value())))
 }
 
 //export fatstd_go_bytes_array_len
@@ -187,6 +264,12 @@ func fatstd_go_bytes_replace(sHandle C.uintptr_t, oldHandle C.uintptr_t, newHand
 	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.Replace(s.Value(), old.Value(), newValue.Value(), int(n))))
 }
 
+//export fatstd_go_bytes_repeat
+func fatstd_go_bytes_repeat(sHandle C.uintptr_t, count C.int) C.uintptr_t {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.Repeat(s.Value(), int(count))))
+}
+
 //export fatstd_go_bytes_to_lower
 func fatstd_go_bytes_to_lower(sHandle C.uintptr_t) C.uintptr_t {
 	s := fatstdBytesFromHandle(uintptr(sHandle))
@@ -197,6 +280,26 @@ func fatstd_go_bytes_to_lower(sHandle C.uintptr_t) C.uintptr_t {
 func fatstd_go_bytes_to_upper(sHandle C.uintptr_t) C.uintptr_t {
 	s := fatstdBytesFromHandle(uintptr(sHandle))
 	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.ToUpper(s.Value())))
+}
+
+//export fatstd_go_bytes_index_byte
+func fatstd_go_bytes_index_byte(sHandle C.uintptr_t, c C.uchar) C.int {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	return C.int(fatbytes.IndexByte(s.Value(), byte(c)))
+}
+
+//export fatstd_go_bytes_index_any
+func fatstd_go_bytes_index_any(sHandle C.uintptr_t, charsHandle C.uintptr_t) C.int {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	chars := fatstdStringFromHandle(uintptr(charsHandle))
+	return C.int(fatbytes.IndexAny(s.Value(), chars.Value()))
+}
+
+//export fatstd_go_bytes_to_valid_utf8
+func fatstd_go_bytes_to_valid_utf8(sHandle C.uintptr_t, replacementHandle C.uintptr_t) C.uintptr_t {
+	s := fatstdBytesFromHandle(uintptr(sHandle))
+	repl := fatstdBytesFromHandle(uintptr(replacementHandle))
+	return C.uintptr_t(fatstdBytesNewFromGoBytes(fatbytes.ToValidUTF8(s.Value(), repl.Value())))
 }
 
 //export fatstd_go_bytes_index
