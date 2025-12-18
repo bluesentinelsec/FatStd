@@ -89,6 +89,22 @@ FATSTD_API size_t fat_StringLenBytes(fat_String s);
 FATSTD_API size_t fat_StringCopyOut(fat_String s, void *dst, size_t dst_len);
 
 /**
+ * @brief Copies bytes out of a FatStd string into a caller buffer and NUL-terminates.
+ *
+ * Copies up to `dst_len - 1` bytes into `dst`, then writes a trailing `'\0'` when
+ * `dst_len > 0`. Returns the number of bytes copied (excluding the terminator).
+ *
+ * @param s String handle.
+ * @param dst Destination buffer (may be NULL only if dst_len == 0).
+ * @param dst_len Capacity of `dst` in bytes (including space for the terminator).
+ * @return Number of bytes copied (excluding the terminator).
+ *
+ * @note Embedded NULs are preserved in the copied bytes, but any C-string consumer
+ * will treat the first NUL as the end of the string.
+ */
+FATSTD_API size_t fat_StringCopyOutCStr(fat_String s, char *dst, size_t dst_len);
+
+/**
  * @brief Returns a new string handle whose bytes are a clone of `s`.
  *
  * @param s String handle.

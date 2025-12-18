@@ -18,6 +18,23 @@ size_t fat_StringCopyOut(fat_String s, void *dst, size_t dst_len) {
   return (size_t)fatstd_go_string_copy_out((uintptr_t)s, (char *)dst, dst_len);
 }
 
+size_t fat_StringCopyOutCStr(fat_String s, char *dst, size_t dst_len) {
+  if (dst == NULL) {
+    if (dst_len == 0) {
+      return 0;
+    }
+    fat_StringCopyOut(s, NULL, dst_len);
+  }
+
+  if (dst_len == 0) {
+    return 0;
+  }
+
+  size_t copied = fat_StringCopyOut(s, dst, dst_len - 1);
+  dst[copied] = '\0';
+  return copied;
+}
+
 fat_String fat_StringClone(fat_String s) {
   return (fat_String)fatstd_go_string_clone((uintptr_t)s);
 }
