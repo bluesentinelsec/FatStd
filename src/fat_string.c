@@ -10,6 +10,14 @@ fat_String fat_StringNewUTF8N(const char *bytes, size_t len) {
   return (fat_String)fatstd_go_string_new_utf8_n((char *)bytes, len);
 }
 
+size_t fat_StringLenBytes(fat_String s) {
+  return (size_t)fatstd_go_string_len_bytes((uintptr_t)s);
+}
+
+size_t fat_StringCopyOut(fat_String s, void *dst, size_t dst_len) {
+  return (size_t)fatstd_go_string_copy_out((uintptr_t)s, (char *)dst, dst_len);
+}
+
 fat_String fat_StringClone(fat_String s) {
   return (fat_String)fatstd_go_string_clone((uintptr_t)s);
 }

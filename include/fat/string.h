@@ -19,6 +19,12 @@ FATSTD_API fat_String fat_StringNewUTF8(const char *cstr);
 // Creates a UTF-8 string from an explicit byte span.
 FATSTD_API fat_String fat_StringNewUTF8N(const char *bytes, size_t len);
 
+// Returns the number of bytes in the string (may include embedded NULs).
+FATSTD_API size_t fat_StringLenBytes(fat_String s);
+
+// Copies up to `dst_len` bytes into `dst`. Returns the number of bytes copied.
+FATSTD_API size_t fat_StringCopyOut(fat_String s, void *dst, size_t dst_len);
+
 FATSTD_API fat_String fat_StringClone(fat_String s);
 
 FATSTD_API bool fat_StringContains(fat_String s, fat_String substr);

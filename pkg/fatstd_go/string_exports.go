@@ -117,6 +117,34 @@ func fatstd_go_string_new_utf8_n(bytes *C.char, len C.size_t) C.uintptr_t {
 	return C.uintptr_t(handle)
 }
 
+//export fatstd_go_string_len_bytes
+func fatstd_go_string_len_bytes(handle C.uintptr_t) C.size_t {
+	s := fatstdStringFromHandle(uintptr(handle))
+	return C.size_t(len(s.Value()))
+}
+
+//export fatstd_go_string_copy_out
+func fatstd_go_string_copy_out(handle C.uintptr_t, dst *C.char, dstLen C.size_t) C.size_t {
+	if dst == nil {
+		if dstLen == 0 {
+			return 0
+		}
+		panic("fatstd_go_string_copy_out: dst is NULL but dstLen > 0")
+	}
+	if dstLen > C.size_t(2147483647) {
+		panic("fatstd_go_string_copy_out: dstLen too large")
+	}
+
+	s := fatstdStringFromHandle(uintptr(handle))
+	src := []byte(s.Value())
+	n := len(src)
+	if n > int(dstLen) {
+		n = int(dstLen)
+	}
+	copy(unsafe.Slice((*byte)(unsafe.Pointer(dst)), int(dstLen))[:n], src[:n])
+	return C.size_t(n)
+}
+
 //export fatstd_go_string_clone
 func fatstd_go_string_clone(handle C.uintptr_t) C.uintptr_t {
 	s := fatstdStringFromHandle(uintptr(handle))

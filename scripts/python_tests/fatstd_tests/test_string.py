@@ -18,6 +18,12 @@ class TestString(unittest.TestCase):
         cls.fat_StringNewUTF8N = bind(
             "fat_StringNewUTF8N", argtypes=[ctypes.c_void_p, ctypes.c_size_t], restype=fat_string
         )
+        cls.fat_StringLenBytes = bind(
+            "fat_StringLenBytes", argtypes=[fat_string], restype=ctypes.c_size_t
+        )
+        cls.fat_StringCopyOut = bind(
+            "fat_StringCopyOut", argtypes=[fat_string, ctypes.c_void_p, ctypes.c_size_t], restype=ctypes.c_size_t
+        )
         cls.fat_StringClone = bind("fat_StringClone", argtypes=[fat_string], restype=fat_string)
         cls.fat_StringContains = bind(
             "fat_StringContains", argtypes=[fat_string, fat_string], restype=ctypes.c_bool
@@ -141,6 +147,26 @@ class TestString(unittest.TestCase):
 
         self.fat_StringFree(s2)
         self.fat_StringFree(c2)
+
+    def test_copy_out(self) -> None:
+        src_bytes = b"abc\x00def"
+        raw = ctypes.create_string_buffer(src_bytes, len(src_bytes))
+        s = self.fat_StringNewUTF8N(ctypes.addressof(raw), len(raw.raw))
+        self.assertNotEqual(0, s)
+
+        self.assertEqual(len(src_bytes), self.fat_StringLenBytes(s))
+
+        dst = ctypes.create_string_buffer(len(src_bytes), len(src_bytes))
+        copied = self.fat_StringCopyOut(s, ctypes.addressof(dst), len(dst.raw))
+        self.assertEqual(len(src_bytes), copied)
+        self.assertEqual(src_bytes, dst.raw)
+
+        dst2 = ctypes.create_string_buffer(3, 3)
+        copied2 = self.fat_StringCopyOut(s, ctypes.addressof(dst2), len(dst2.raw))
+        self.assertEqual(3, copied2)
+        self.assertEqual(src_bytes[:3], dst2.raw)
+
+        self.fat_StringFree(s)
 
     def test_contains_basic(self) -> None:
         hay = self.fat_StringNewUTF8(b"lorem ipsum")
