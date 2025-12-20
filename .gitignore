@@ -32,6 +32,9 @@ go.work.sum
 build/
 build_*/
 
+# Local caches
+.cache/
+
 # Python
 __pycache__/
 *.py[cod]

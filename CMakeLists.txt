@@ -29,8 +29,6 @@ add_custom_command(
   COMMAND
     "${CMAKE_COMMAND}" -E env
       "GOCACHE=${fatstd_go_out_dir}/gocache"
-      "GOMODCACHE=${fatstd_go_out_dir}/gomodcache"
-      "GOPATH=${fatstd_go_out_dir}/gopath"
       "${FATSTD_GO_EXECUTABLE}" build
         -buildmode=c-archive
         -o "${fatstd_go_archive}"
@@ -51,12 +49,14 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/csv_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/json_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/xml_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/tiled_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstrings/fatstrings.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/fatbytes.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/buffer.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/reader.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatconv/fatconv.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.mod"
+    "${CMAKE_CURRENT_SOURCE_DIR}/go.sum"
   VERBATIM
 )
 
@@ -98,6 +98,7 @@ target_sources(
     src/fat_xml.c
     src/fat_zip.c
     src/fat_tar.c
+    src/fat_tiled.c
     src/fat_sdl3_link.c
     src/fat_raylib_link.c
     src/fat_raygui.c
