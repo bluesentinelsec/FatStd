@@ -5,15 +5,9 @@ Refer to the following documents for context on the project:
 4. docs/error_strategy.md
 5. include/fat/*.h
 
-Implement the bindings for the following compression/decompression packages in fatstd:
+Implement the bindings for the net/socket package in Go.
 
-compress/bzip2
-compress/flate
-compress/gzip
-compress/lzw
-compress/zlib
-
-I just need to be able to compress and decompress data.
+I just need to be able to create TCP and UDP sockets for clients and servers. Keep it simple.
 
 I expect the Go bindings, C bindings, and unit tests in Python.
 If any of the functions are a poor fit for C, use an alternative that honors the design.
