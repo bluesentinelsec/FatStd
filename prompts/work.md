@@ -5,11 +5,14 @@ Refer to the following documents for context on the project:
 4. docs/error_strategy.md
 5. include/fat/*.h
 
-Implement the bindings for the net/socket package in Go.
+Implement the bindings for the net/http package in Go.
 
-I just need to be able to create TCP and UDP sockets for clients and servers. Keep it simple.
+I just need to be able to create a basic HTTP client and server.
+It doesn't need ALL functionality, just enough for the most common HTTP functionality.
 
 I expect the Go bindings, C bindings, and unit tests in Python.
 If any of the functions are a poor fit for C, use an alternative that honors the design.
 
 When finished, add a brief tutorial doc showing how to use this module from the perspective of the caller under docs/
+
+I want to see how to make HTTP GET and POST requests in particular.

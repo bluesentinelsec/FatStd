@@ -51,6 +51,7 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/xml_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/tiled_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/socket_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/http_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/compress_common.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/bzip2_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/flate_exports.go"
@@ -68,6 +69,7 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/lzw/lzw.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/zlib/zlib.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/net/socket/socket.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/net/httpx/httpx.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.mod"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.sum"
   VERBATIM
@@ -118,6 +120,7 @@ target_sources(
     src/fat_lzw.c
     src/fat_zlib.c
     src/fat_socket.c
+    src/fat_http.c
     src/fat_sdl3_link.c
     src/fat_raylib_link.c
     src/fat_raygui.c
@@ -132,6 +135,10 @@ target_include_directories(
 )
 
 target_link_libraries(fatstd PRIVATE fatstd_go)
+
+if(APPLE)
+  target_link_libraries(fatstd PRIVATE "-framework Security" "-framework CoreFoundation")
+endif()
 
 # --- SDL3 (FetchContent) ---
 set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library" FORCE)
