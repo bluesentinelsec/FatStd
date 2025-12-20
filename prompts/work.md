@@ -4,53 +4,71 @@ Refer to the following documents for context on the project:
 3. docs/documenting_code.md
 4. docs/error_strategy.md
 
-Implement the following archive/zip functions in fatstd.
+Implement the following archive/tar functions in fatstd.
 
-func RegisterCompressor(method uint16, comp Compressor)
-func RegisterDecompressor(method uint16, dcomp Decompressor)
-type Compressor
-type Decompressor
-type File
-func (f *File) DataOffset() (offset int64, err error)
-func (f *File) Open() (io.ReadCloser, error)
-func (f *File) OpenRaw() (io.Reader, error)
-type FileHeader
-func FileInfoHeader(fi fs.FileInfo) (*FileHeader, error)
-func (h *FileHeader) FileInfo() fs.FileInfo
-func (h *FileHeader) ModTime() time.TimeDEPRECATED
-func (h *FileHeader) Mode() (mode fs.FileMode)
-func (h *FileHeader) SetModTime(t time.Time)DEPRECATED
-func (h *FileHeader) SetMode(mode fs.FileMode)
-type ReadCloser
-func OpenReader(name string) (*ReadCloser, error)
-func (rc *ReadCloser) Close() error
+type FileInfoNames
+type Format
+func (f Format) String() string
+type Header
+func FileInfoHeader(fi fs.FileInfo, link string) (*Header, error)
+func (h *Header) FileInfo() fs.FileInfo
 type Reader
-func NewReader(r io.ReaderAt, size int64) (*Reader, error)
-func (r *Reader) Open(name string) (fs.File, error)
-func (r *Reader) RegisterDecompressor(method uint16, dcomp Decompressor)
+func NewReader(r io.Reader) *Reader
+func (tr *Reader) Next() (*Header, error)
+func (tr *Reader) Read(b []byte) (int, error)
 type Writer
 func NewWriter(w io.Writer) *Writer
-func (w *Writer) AddFS(fsys fs.FS) error
-func (w *Writer) Close() error
-func (w *Writer) Copy(f *File) error
-func (w *Writer) Create(name string) (io.Writer, error)
-func (w *Writer) CreateHeader(fh *FileHeader) (io.Writer, error)
-func (w *Writer) CreateRaw(fh *FileHeader) (io.Writer, error)
-func (w *Writer) Flush() error
-func (w *Writer) RegisterCompressor(method uint16, comp Compressor)
-func (w *Writer) SetComment(comment string) error
-func (w *Writer) SetOffset(n int64)
+func (tw *Writer) AddFS(fsys fs.FS) error
+func (tw *Writer) Close() error
+func (tw *Writer) Flush() error
+func (tw *Writer) Write(b []byte) (int, error)
+func (tw *Writer) WriteHeader(hdr *Header) error
 
 const (
-	Store   uint16 = 0 // no compression
-	Deflate uint16 = 8 // DEFLATE compressed
+	// Type '0' indicates a regular file.
+	TypeReg = '0'
+
+	// Deprecated: Use TypeReg instead.
+	TypeRegA = '\x00'
+
+	// Type '1' to '6' are header-only flags and may not have a data body.
+	TypeLink    = '1' // Hard link
+	TypeSymlink = '2' // Symbolic link
+	TypeChar    = '3' // Character device node
+	TypeBlock   = '4' // Block device node
+	TypeDir     = '5' // Directory
+	TypeFifo    = '6' // FIFO node
+
+	// Type '7' is reserved.
+	TypeCont = '7'
+
+	// Type 'x' is used by the PAX format to store key-value records that
+	// are only relevant to the next file.
+	// This package transparently handles these types.
+	TypeXHeader = 'x'
+
+	// Type 'g' is used by the PAX format to store key-value records that
+	// are relevant to all subsequent files.
+	// This package only supports parsing and composing such headers,
+	// but does not currently support persisting the global state across files.
+	TypeXGlobalHeader = 'g'
+
+	// Type 'S' indicates a sparse file in the GNU format.
+	TypeGNUSparse = 'S'
+
+	// Types 'L' and 'K' are used by the GNU format for a meta file
+	// used to store the path or link name for the next file.
+	// This package transparently handles these types.
+	TypeGNULongName = 'L'
+	TypeGNULongLink = 'K'
 )
 
 var (
-	ErrFormat       = errors.New("zip: not a valid zip file")
-	ErrAlgorithm    = errors.New("zip: unsupported compression algorithm")
-	ErrChecksum     = errors.New("zip: checksum error")
-	ErrInsecurePath = errors.New("zip: insecure file path")
+	ErrHeader          = errors.New("archive/tar: invalid tar header")
+	ErrWriteTooLong    = errors.New("archive/tar: write too long")
+	ErrFieldTooLong    = errors.New("archive/tar: header field too long")
+	ErrWriteAfterClose = errors.New("archive/tar: write after close")
+	ErrInsecurePath    = errors.New("archive/tar: insecure file path")
 )
 
 
