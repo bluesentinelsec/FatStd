@@ -50,6 +50,7 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/base64_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/csv_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/json_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/xml_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstrings/fatstrings.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/fatbytes.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/buffer.go"
@@ -94,6 +95,7 @@ target_sources(
     src/fat_base64.c
     src/fat_csv.c
     src/fat_json.c
+    src/fat_xml.c
     src/fat_zip.c
     src/fat_tar.c
     src/fat_sdl3_link.c
