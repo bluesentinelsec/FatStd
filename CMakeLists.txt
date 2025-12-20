@@ -50,11 +50,22 @@ add_custom_command(
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/json_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/xml_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/tiled_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/compress_common.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/bzip2_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/flate_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/gzip_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/lzw_exports.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstd_go/zlib_exports.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatstrings/fatstrings.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/fatbytes.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/buffer.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatbytes/reader.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/pkg/fatconv/fatconv.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/bzip2/bzip2.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/flate/flate.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/gzip/gzip.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/lzw/lzw.go"
+    "${CMAKE_CURRENT_SOURCE_DIR}/pkg/compress/zlib/zlib.go"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.mod"
     "${CMAKE_CURRENT_SOURCE_DIR}/go.sum"
   VERBATIM
@@ -99,6 +110,11 @@ target_sources(
     src/fat_zip.c
     src/fat_tar.c
     src/fat_tiled.c
+    src/fat_bzip2.c
+    src/fat_flate.c
+    src/fat_gzip.c
+    src/fat_lzw.c
+    src/fat_zlib.c
     src/fat_sdl3_link.c
     src/fat_raylib_link.c
     src/fat_raygui.c
